@@ -3,15 +3,15 @@
 import numpy as np
 import matplotlib.pylab as pylab
 import matplotlib.pyplot as plt
-params = {'legend.fontsize': 'medium',
-          'figure.figsize': (6, 3),
+params = {'legend.fontsize': 'small',
+          'figure.figsize': (5, 5),
          'axes.labelsize': 'medium',
-         'axes.titlesize':'large',
-         'xtick.labelsize':'small',
-         'ytick.labelsize':'small'}
+         'axes.titlesize':'x-small',
+         'xtick.labelsize':'x-small',
+         'ytick.labelsize':'x-small'}
 pylab.rcParams.update(params)
 
-savename='definiterun'
+savename='traditionalrun'
 
 print("Loading results from folder "+savename+".")
 
@@ -25,9 +25,9 @@ M=np.load(savename+'/M.npy')
 imax=np.load(savename+'/imax.npy')
 hs=np.load(savename+'/h.npy')
 CLV=np.load(savename+'/CLV.npy')
+#BLV=np.load(savename+'/BLV.npy')
+#R=np.load(savename+'/R.npy')
 
-start=CLV.shape[0]*0.2
-ende=CLV.shape[0]*0.8
 figurename='lyapspec.png'#'lyapspec_rescaled_vs_scale.pdf'
 
 print("Printing to figure "+figurename+".")
@@ -43,7 +43,7 @@ def dKY(X):
     res = i + (res-X[i])/np.abs(X[i])
     return res
 
-fig, ax = plt.subplots(1, 3,  sharex='col',figsize=(20,8))    
+fig, ax = plt.subplots(3, 1,  sharex='col',figsize=(10,15))    
 for count,h in enumerate(hs):
     Y = lyapmean_blv[:,count]
     ax[0].plot(np.arange(1,M+1,1), Y, label = 'h = '+str(h)+'; posLE = '+str(posLE(Y))+'; dKY = '+"{0:.2f}".format(dKY(Y)).format())
@@ -51,42 +51,41 @@ for count,h in enumerate(hs):
 ax[0].set_xlabel('Lyapunov Index')
 ax[0].set_ylabel('Lyapunov Exponents [1/MTU]')
 ax[0].set_title('BLE; Rescaled Y modes = '+str(paraL96['RescaledY'])+' and b = '+str(paraL96['b'])+', c = '+str(paraL96['c']))
-ax[0].set_ylim([-75,50]) 
-legend = ax[0].legend(loc='best', shadow=False, labelspacing = 0.5,frameon=False,borderaxespad=0.1,handleheight=0.0,borderpad=0.5)
+#ax[counti].set_ylim([-100,70]) 
+legend = ax[0].legend(loc='best', shadow=False,fontsize=6, labelspacing = 0.5,frameon=False,borderaxespad=0.1,handleheight=0.0,borderpad=0.5)
 for label in legend.get_texts():
-    label.set_fontsize('medium')
+    label.set_fontsize('x-small')
 frame = legend.get_frame()
 frame.set_facecolor('1.0')
 
 for count,h in enumerate(hs):
-    Y = np.mean(lyaploc_clv[int(start):int(ende),:,count],axis = 0)
+    Y = np.mean(lyaploc_clv[int(imax*0.1):int(imax*0.9),:,count],axis = 0)
     ax[1].plot(np.arange(1,M+1,1),Y, label = 'h = '+str(h)+'; posLE = '+str(posLE(Y))+'; dKY = '+"{0:.2f}".format(dKY(Y)).format())
     
 ax[1].set_xlabel('Lyapunov Index')
 ax[1].set_ylabel('Lyapunov Exponents [1/MTU]')
 ax[1].set_title('CLE; Rescaled Y modes = '+str(paraL96['RescaledY'])+' and b = '+str(paraL96['b'])+', c = '+str(paraL96['c']))
-ax[1].set_ylim([-75,50]) 
-legend = ax[1].legend(loc='best', shadow=False, labelspacing = 0.5,frameon=False,borderaxespad=0.1,handleheight=0.0,borderpad=0.5)
+#ax[counti].set_ylim([-100,70]) 
+legend = ax[1].legend(loc='best', shadow=False,fontsize=6, labelspacing = 0.5,frameon=False,borderaxespad=0.1,handleheight=0.0,borderpad=0.5)
 for label in legend.get_texts():
-    label.set_fontsize('medium')
+    label.set_fontsize('x-small')
 frame = legend.get_frame()
 frame.set_facecolor('1.0')
 
 for count,h in enumerate(hs):
-    R = np.sum(np.mean(CLV[int(start):int(ende),0:paraL96['dimX'],:,count]**2,axis=0),axis=0)
-    p=ax[2].plot(np.arange(1,M+1),R, label = 'h = '+str(h))
-    ax[2].axvline(np.argmin(np.abs(np.mean(lyaploc_clv[int(start):int(ende),:,count],axis = 0)))+1,linewidth=1, color=p[0].get_color(), ls = ':')
+    ax[2].plot(np.arange(1,M+1),np.sum(np.mean(CLV[int(imax*0.1):int(imax*0.9),0:paraL96['dimX'],:,count]**2,axis=0),axis=0), 
+      label = 'h = '+str(h))
     
 ax[2].set_xlabel('Lyapunov Index')
 ax[2].set_ylabel('Projection on X-Modes')
 ax[2].set_title('CLV X-Modes Norm; Rescaled Y modes = '+str(paraL96['RescaledY'])+' and b = '+str(paraL96['b'])+', c = '+str(paraL96['c']))
-ax[2].set_ylim([0,1.005])
-legend = ax[2].legend(loc='best', shadow=False, labelspacing = 0.5,frameon=False,borderaxespad=0.1,handleheight=0.0,borderpad=0.5)
+#ax[counti].set_ylim([-100,70]) 
+legend = ax[2].legend(loc='best', shadow=False,fontsize=6, labelspacing = 0.5,frameon=False,borderaxespad=0.1,handleheight=0.0,borderpad=0.5)
 for label in legend.get_texts():
-    label.set_fontsize('medium')
+    label.set_fontsize('x-small')
 frame = legend.get_frame()
 frame.set_facecolor('1.0')
-
+    
 fig.tight_layout()
 fig.savefig(savename+"/"+figurename)
 

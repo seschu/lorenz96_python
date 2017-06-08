@@ -11,7 +11,7 @@ params = {'legend.fontsize': 'medium',
          'ytick.labelsize':'small'}
 pylab.rcParams.update(params)
 
-savename='definiterun'
+savename='gabrielessetup_convergence_first_run'
 
 print("Loading results from folder "+savename+".")
 
@@ -25,10 +25,20 @@ M=np.load(savename+'/M.npy')
 imax=np.load(savename+'/imax.npy')
 hs=np.load(savename+'/h.npy')
 CLV=np.load(savename+'/CLV.npy')
+BLV=np.load(savename+'/BLV.npy')
 
-start=CLV.shape[0]*0.2
-ende=CLV.shape[0]*0.8
-figurename='lyapspec.png'#'lyapspec_rescaled_vs_scale.pdf'
+savename='gabrielessetup_convergence_second_run'
+
+BLV2=np.load(savename+'/BLV2.npy')
+CLV2=np.load(savename+'/CLV2.npy')
+lyaploc_blv2=np.load(savename+'/lyaploc_blv2.npy')
+lyaploc_clv2=np.load(savename+'/lyaploc_clv2.npy')
+lyapmean_blv2=np.load(savename+'/lyapmean_blv2.npy')
+lyapmean_clv2=np.load(savename+'/lyapmean_clv2.npy')
+
+start=1000
+ende=9000
+figurename='lyapspec'#'lyapspec_rescaled_vs_scale.pdf'
 
 print("Printing to figure "+figurename+".")
 
@@ -37,13 +47,13 @@ posLE=lambda X:X[np.where(X>0)].shape[0]
 def dKY(X):
     res=X[0]
     i=0
-    while res >=0:
+    while res >=0 and i < M-1:
         i=i+1
         res=res + X[i]
     res = i + (res-X[i])/np.abs(X[i])
     return res
 
-fig, ax = plt.subplots(1, 3,  sharex='col',figsize=(20,8))    
+fig, ax = plt.subplots(3, 1,  sharex='col',figsize=(8,20))    
 for count,h in enumerate(hs):
     Y = lyapmean_blv[:,count]
     ax[0].plot(np.arange(1,M+1,1), Y, label = 'h = '+str(h)+'; posLE = '+str(posLE(Y))+'; dKY = '+"{0:.2f}".format(dKY(Y)).format())
@@ -74,8 +84,8 @@ frame.set_facecolor('1.0')
 
 for count,h in enumerate(hs):
     R = np.sum(np.mean(CLV[int(start):int(ende),0:paraL96['dimX'],:,count]**2,axis=0),axis=0)
-    p=ax[2].plot(np.arange(1,M+1),R, label = 'h = '+str(h))
-    ax[2].axvline(np.argmin(np.abs(np.mean(lyaploc_clv[int(start):int(ende),:,count],axis = 0)))+1,linewidth=1, color=p[0].get_color(), ls = ':')
+    p=ax[2].plot(np.arange(1,M+1),R, label = 'h = '+str(h),ls='',marker='s')
+    ax[2].axvline(np.argmin(np.abs(np.mean(lyaploc_clv[int(start):int(ende),:,count],axis = 0)))+1,linewidth=1, color=p[0].get_color())
     
 ax[2].set_xlabel('Lyapunov Index')
 ax[2].set_ylabel('Projection on X-Modes')
@@ -88,5 +98,6 @@ frame = legend.get_frame()
 frame.set_facecolor('1.0')
 
 fig.tight_layout()
-fig.savefig(savename+"/"+figurename)
+fig.savefig(savename+"/"+figurename+".png")
+fig.savefig(savename+"/"+figurename+".pdf")
 

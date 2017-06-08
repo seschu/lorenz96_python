@@ -3,24 +3,24 @@ import numpy as np
 from l96 import *
 
 # these are our constants
-paraL96 = {'F1' : 8,
+paraL96 = {'F1' : 64,
            'F2' : 0,
            'b'  : 10,
            'c'  : 10,
            'h'  : 1,
-           'dimX': 36,
-           'dimY' : 8,
+           'dimX': 20,
+           'dimY' : 10,
            'RescaledY' : False
            }
 
 # M number exponents
 M = paraL96['dimX'] + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
 dimN = paraL96['dimX'] + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
-
-t = np.arange(0,50,1)
-spinup = 100;
+integrator = 'classic'
+t = np.arange(0,100,0.1)
+spinup = 50;
 #setup L96
-hs=[ 0.    ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
+hs=[1.0] #[ 0.    ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
 CLV = np.zeros((len(t),dimN,M,len(hs),2))
 BLV = np.zeros((len(t),dimN,M,len(hs),2))
 R = np.zeros((len(t),dimN,M,len(hs),2))
@@ -42,7 +42,7 @@ for counti,rescale in enumerate([False, True]):
         print("\nExperiment is the following:")
         for key in paraL96.keys(): print(key+' : '+str(paraL96[key]))
         L96,L96Jac,L96JacV,L96JacFull,dimN = setupL96_2layer(paraL96)
-        field = GinelliForward(dimN,M,tendfunc = L96, jacfunc = L96Jac, jacVfunc = L96JacV,jacfull=L96JacFull)
+        field = GinelliForward(dimN,M,tendfunc = L96, jacfunc = L96Jac, jacVfunc = L96JacV,jacfull=L96JacFull, integrator=integrator)
         # initialize fields 
         print("\nInitialize ...")
         field.init_back('random',0.1)
@@ -50,7 +50,8 @@ for counti,rescale in enumerate([False, True]):
         field.restoreQ()   
         # spinup
         print("\nSpinup ...")
-        for i in range(0,int(spinup/0.1),1): field.integrate_back(0.1)
+        #for i in range(0,int(spinup/0.1),1): 
+        field.integrate_back(spinup)
         lyap = np.zeros(M)
         BLV[0,:,:,count,counti]=field.x['lin']
         field.step_t = 0.0
@@ -88,7 +89,7 @@ for counti,rescale in enumerate([False, True]):
             
 
 
-savename='traditionalrun'
+savename='test'
 print("Saveing results in folder "+savename+".")
 
 if not os.path.exists(savename): os.mkdir(savename)
