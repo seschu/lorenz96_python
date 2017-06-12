@@ -41,12 +41,25 @@ secondary_vector = np.memmap(savename+'/secondary_vector.dat',mode='w+',shape=(l
 
 # Compute the exponents
 
+n_step = 1
+
+propagator = np.eye(dimN,M)
+
 for count,h in enumerate(hs):
     paraL96['h']=h
-    L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96(paraL96)
     
     for tn, (ts,te) in enumerate(zip(t[0:-1],t[1:])):
-        pass
-
+        # create propagator
+        propagator=np.matmul(np.matmul(BLV[tn,:,:,count],R[tn,:,:,count]),propagator)
+        
+        # mutiply clvs and contract with hessematrix
+        
+        # multiply with growth factor
+        
+        if tn % n_step == 0: 
+            # propagate solution 
+            
+            # reset propagator
+            propagator = np.eye(dimN,M) 
 
 print("Saveing results in folder "+savename+".")

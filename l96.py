@@ -30,10 +30,30 @@ def setupL96(para):
     
     #L96Full = lambda t,x: np.concatenate((L96(x[0:dimN],t), np.reshape(L96JacV(x[0:dimN],np.reshape(x[dimN:],(dimN,dimN)),t),((dimN)**2,1)))
     
-    #L96Hes = np.stack(((0.0,-1.0,0.0,0.0),(-1.0,0.0,0.0,1) ,(0.0,0.0,0.0,0.0),(0.0,1.0,0.0,0.0)), axis = 0)
+    for k in np.arange(0,dimN):
+        HessMat[XI[k],XIp1[k],XIm1[k]]=1
+        HessMat[XI[k],XIm1[k],XIp1[k]]=1
+        HessMat[XI[k],XIm2[k],XIm1[k]]=-1
+        HessMat[XI[k],XIm1[k],XIm2[k]]=-1
+    
     L96JacFull = None
-    return L96,L96Jac,L96JacV,L96JacFull,dimN
+    return L96,L96Jac,L96JacV,L96JacFull,HessMat,dimN
 
+def contract_hess_l96_1layer(a,b,c):
+    N = a.shape[0]      
+    
+    I=np.arange(0,N,1)
+    Im2=(I-2) % N
+    Im1=(I-1) % N
+    Ip1=(I+1) % N
+    result = 0
+    for k in np.arange(0,dimN):
+        result =(
+        +a[I[k]]*b[Ip1[k]]*c[Im1[k]]
+        +a[I[k]]*b[Im1[k]]*c[Ip1[k]]
+        -a[I[k]]*b[Im2[k]]*c[Im1[k]]
+        -a[I[k]]*b[Im1[k]]*c[Im2[k]])
+    
 
 def setupL96_2layer(para):    
     
