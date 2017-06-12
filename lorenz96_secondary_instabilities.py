@@ -109,7 +109,7 @@ for count,h in enumerate(hs):
 
 print("Saveing results in folder "+savename+".")
 np.save('paraL96',savename+"/paraL96")
-maskcorr
+
 corrs=np.arange(0.01,1,0.1)
 lowest=np.zeros((corrs.shape[0],M))
 length=np.zeros((corrs.shape[0],M))

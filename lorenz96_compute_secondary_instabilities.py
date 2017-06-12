@@ -50,18 +50,21 @@ t = np.arange(0,10000,1)
 
 
 for tn, (ts,te) in enumerate(zip(t[0:-20],t[1:-19])):
+    dtau=te -ts
     print(tn)
     for n_step in range(0,15):
-        invertCLV_final=np.linalg.inv(CLV[tn+n_step,:,:,count])
+        print(tn,n_step)
+        invertCLV_final=np.linalg.inv(CLV[tn+n_step,:,:,0])
         for final_clv,init_clv in product(np.arange(0,M),np.arange(0,M)):
             contracted_CLVs[tn,init_clv,final_clv,n_step]=1/2*l96.contract_hess_l96_1layer_v2(invertCLV_final[final_clv,:],CLV[tn,:,init_clv,0])
             # multiply with growth factor   
-            solution[tn,init_clv,final_clv,n_step] = solution[tn,init_clv,final_clv,n_step] + (
-                dtau * contracted_CLVs[tn,init_clv,final_clv,count]*np.exp(2*np.sum(dtau*lyaploc_clv[tn:tn+step,final_clv,count]))*np.exp(np.sum(dtau*lyaploc_clv[tn+step:tn+n_step,init_clv,count]))
+            for step in range(0,n_step+1):
+                solution[tn,init_clv,final_clv,n_step] = solution[tn,init_clv,final_clv,n_step] + (
+                dtau * contracted_CLVs[tn,init_clv,final_clv,n_step]*np.exp(2*np.sum(dtau*lyaploc_clv[tn:tn+step,final_clv,0]))*np.exp(np.sum(dtau*lyaploc_clv[tn+step:tn+n_step,init_clv,0]))
                 )
-        growth[tn,init_clv,n_step]=np.linalg.norm(np.matmul(CLV[tn+n_step,:,:,count],solution[tn,init_clv,:,n_step]))
-        growth[tn,init_clv,n_step]=np.divide(growth[tn,init_clv,n_step],growth[tn,init_clv,0])        
-        normalized_solution[tn,init_clv,:,n_step]=np.divide(solution[tn,init_clv,:,n_step],np.linalg.norm(np.matmul(CLV[tn+n_step,:,:,count],solution[tn,init_clv,:,n_step])))
+        #growth[tn,init_clv,n_step]=np.linalg.norm(np.matmul(CLV[tn+n_step,:,:,0],solution[tn,init_clv,:,n_step]))
+        #growth[tn,init_clv,n_step]=np.divide(growth[tn,init_clv,n_step],growth[tn,init_clv,0])        
+        #normalized_solution[tn,init_clv,:,n_step]=np.divide(solution[tn,init_clv,:,n_step],np.linalg.norm(np.matmul(CLV[tn+n_step,:,:,0],solution[tn,init_clv,:,n_step])))
     if tn % 100 == 0:
         np.memmap.flush(solution)
         np.memmap.flush(contracted_CLVs)
