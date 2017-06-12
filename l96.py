@@ -47,13 +47,27 @@ def contract_hess_l96_1layer(a,b,c):
     Im1=(I-1) % N
     Ip1=(I+1) % N
     result = 0
-    for k in np.arange(0,dimN):
+    for k in np.arange(0,N):
         result =(
         +a[I[k]]*b[Ip1[k]]*c[Im1[k]]
         +a[I[k]]*b[Im1[k]]*c[Ip1[k]]
         -a[I[k]]*b[Im2[k]]*c[Im1[k]]
         -a[I[k]]*b[Im1[k]]*c[Im2[k]])
+    return result
+
+def contract_hess_l96_1layer_v2(a,b):
+    N = a.shape[0]      
     
+    I=np.arange(0,N,1)
+    Im2=(I-2) % N
+    Im1=(I-1) % N
+    Ip1=(I+1) % N
+    result = 0
+    result =np.sum(
+    +2*np.multiply(np.multiply(a[I],b[Im1]),b[Ip1])
+    -2*np.multiply(np.multiply(a[I],b[Im2]),b[Im1])
+    )
+    return result
 
 def setupL96_2layer(para):    
     
