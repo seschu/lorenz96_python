@@ -52,7 +52,7 @@ t = np.arange(0,10000,1)
 for tn, (ts,te) in enumerate(zip(t[0:-20],t[1:-19])):
     print(tn)
     for n_step in range(0,15):
-        invertCLV_final=np.linalg.inv(CLV[tn+n_step,:,:,count])
+        invertCLV_final=np.linalg.inv(CLV[tn+n_step,:,:,0])
         for final_clv,init_clv in product(np.arange(0,M),np.arange(0,M)):
             contracted_CLVs[tn,init_clv,final_clv,n_step]=1/2*l96.contract_hess_l96_1layer_v2(invertCLV_final[final_clv,:],CLV[tn,:,init_clv,0])
             # multiply with growth factor   
