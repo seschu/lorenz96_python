@@ -17,10 +17,10 @@ paraL96 = {'F1' : 10,
            }
 
 # M number exponents
-M = paraL96['dimX'] #+ paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
-dimN = paraL96['dimX']# + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
+M = paraL96['dimX'] + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
+dimN = paraL96['dimX'] + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
 integrator = 'classic'
-t = np.arange(0,10000,1)
+t = np.arange(0,1000,0.1)
 spinup = 100;
 #setup L96
 hs=[ 1. ] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
@@ -28,7 +28,7 @@ hs=[ 1. ] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
 
 testzeroclv=True
 
-savename='secondaryinstabilities'
+savename='secondaryinstabilities_v3'
 if not os.path.exists(savename): os.mkdir(savename)
 CLV = np.memmap(savename+'/CLV.dat',mode='w+',shape=(len(t),dimN,M,len(hs)),dtype='float64')
 BLV = np.memmap(savename+'/BLV.dat',mode='w+',shape=(len(t),dimN,M,len(hs)),dtype='float64')
@@ -37,6 +37,7 @@ lyapmean_blv = np.memmap(savename+'/lyapmean_blv.dat',mode='w+',shape=(M,len(hs)
 lyapmean_clv = np.memmap(savename+'/lyapmean_clv.dat',mode='w+',shape=(M,len(hs)),dtype='float64')
 lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='w+',shape=(len(t),M,len(hs)),dtype='float64')
 lyaploc_blv = np.memmap(savename+'/lyaploc_blv',mode='w+',shape=(len(t)-1,M,len(hs)),dtype='float64')
+np.save(savename+'/t',t)
 if testzeroclv: tendency = np.memmap(savename+'/tendency.dat',mode='w+',shape=(len(t),dimN,len(hs)),dtype='float64')
 if testzeroclv: tendcorr = np.memmap(savename+'/tendcorr.dat',mode='w+',shape=(len(t),len(hs)),dtype='float64')
 
@@ -46,7 +47,7 @@ for count,h in enumerate(hs):
     paraL96['h']=h
     print("\nExperiment is the following:")
     for key in paraL96.keys(): print(key+' : '+str(paraL96[key]))
-    L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96(paraL96)
+    L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96_2layer(paraL96)
     field = l96.GinelliForward(dimN,M,tendfunc = L96, jacfunc = L96Jac, jacVfunc = L96JacV,jacfull=L96JacFull, integrator=integrator)
     # initialize fields 
     print("\nInitialize ...")
@@ -108,7 +109,12 @@ for count,h in enumerate(hs):
 
 
 print("Saveing results in folder "+savename+".")
-np.save('paraL96',savename+"/paraL96")
+np.save(savename+"/paraL96",paraL96)
+
+invCLV = np.memmap(savename+'/invCLV.dat',mode='w+',shape=(len(t),dimN,M,1),dtype='float64')
+
+for tn, (ts,te) in enumerate(zip(t[0:-1],t[1:])):
+    invCLV[tn,:,:,0]=np.linalg.inv(CLV[tn,:,:,0])  
 
 corrs=np.arange(0.01,1,0.1)
 lowest=np.zeros((corrs.shape[0],M))
