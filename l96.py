@@ -30,14 +30,14 @@ def setupL96(para):
     
     #L96Full = lambda t,x: np.concatenate((L96(x[0:dimN],t), np.reshape(L96JacV(x[0:dimN],np.reshape(x[dimN:],(dimN,dimN)),t),((dimN)**2,1)))
     
-    for k in np.arange(0,dimN):
-        HessMat[XI[k],XIp1[k],XIm1[k]]=1
-        HessMat[XI[k],XIm1[k],XIp1[k]]=1
-        HessMat[XI[k],XIm2[k],XIm1[k]]=-1
-        HessMat[XI[k],XIm1[k],XIm2[k]]=-1
-    
+    #for k in np.arange(0,dimN):
+    #    HessMat[XI[k],XIp1[k],XIm1[k]]=1
+    #    HessMat[XI[k],XIm1[k],XIp1[k]]=1
+    #    HessMat[XI[k],XIm2[k],XIm1[k]]=-1
+    #    HessMat[XI[k],XIm1[k],XIm2[k]]=-1
+    HessMat = None
     L96JacFull = None
-    return L96,L96Jac,L96JacV,L96JacFull,HessMat,dimN
+    return L96,L96Jac,L96JacV,L96JacFull,dimN
 
 def contract_hess_l96_1layer(a,b,c):
     N = a.shape[0]      
@@ -62,12 +62,41 @@ def contract_hess_l96_1layer_v2(a,b):
     Im2=(I-2) % N
     Im1=(I-1) % N
     Ip1=(I+1) % N
-    result = 0
-    result =np.sum(
-    +2*np.multiply(np.multiply(a[I],b[Im1]),b[Ip1])
-    -2*np.multiply(np.multiply(a[I],b[Im2]),b[Im1])
-    )
-    return result
+    dummyb = np.multiply(b[Im1,:],b[Ip1,:]-b[Im2,:])
+    #dummyb2 = np.multiply(b[Im2,:],b[Im1,:])
+    
+    return 2*np.matmul(a[:,I],dummyb)
+
+
+def contract_hess_l96_2layer_v2(a,bp,para):
+    rescale = para['RescaledY']
+    dimX = para['dimX'] 
+    dimY = para['dimY']
+    c    = para['c']
+    b    = para['b']
+    NX = dimX
+    NY = dimX*dimY    
+    N = dimX + dimX*dimY
+    
+    XI=np.array(range(0,NX,1))
+    XIm2=(XI-2) % NX
+    XIm1=(XI-1) % NX
+    XIp1=(XI+1) % NX
+    #XIp2=(XI+2) % NX
+    
+    
+    YI=np.array(range(0,NY,1))
+    #YIm2=(YI-2) % NY + NX
+    YIm1=(YI-1) % NY + NX
+    YIp1=(YI+1) % NY + NX
+    YIp2=(YI+2) % N
+    
+    dummybX = np.multiply(bp[XIm1,:],bp[XIp1,:]-bp[XIm2,:])
+    dummybY = c*b*np.multiply(bp[YIp1,:],bp[YIp2,:]-bp[YIm1,:])
+    #dummyb2 = np.multiply(b[Im2,:],b[Im1,:])
+    
+    return 2*(np.matmul(a[:,XI],dummybX)+np.matmul(a[:,YI],dummybY))
+
 
 def setupL96_2layer(para):    
     
