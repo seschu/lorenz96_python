@@ -10,7 +10,7 @@ paraL96 = {'F1' : 10,
            'F2' : 0,
            'b'  : 10,
            'c'  : 10,
-           'h'  : 0,
+           'h'  : 1,
            'dimX': 36,
            'dimY' : 10,
            'RescaledY' : False
@@ -19,9 +19,11 @@ paraL96 = {'F1' : 10,
 # M number exponents
 M = paraL96['dimX'] + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
 dimN = paraL96['dimX'] + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
+<<<<<<< HEAD
 integrator = 'classic'
 dt = 0.01 #np.mean(np.diff(t))
 t = np.arange(0,1000,1)
+
 spinup = 100;
 #setup L96
 hs=[ 1. ] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
@@ -72,10 +74,11 @@ for count,h in enumerate(hs):
         BLV[tn+1,:,:,count]=field.x['lin']
         print(te,'|',count+1,'/',len(hs))
         lyaploc_blv[tn,:,count]=field.lyap
-        if tn % 1000 == 0:
+        if tn % 1 == 0:
             np.memmap.flush(BLV)
             np.memmap.flush(R)
             np.memmap.flush(lyaploc_blv)
+            if testzeroclv: np.memmap.flush(tendency)
     lyapmean_blv[:,count]=np.mean(lyaploc_blv[int(tn/2):,:,count],axis=0)
     
     # Do Backwards steps
