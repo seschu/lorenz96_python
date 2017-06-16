@@ -29,7 +29,7 @@ lyaploc_blv = np.memmap(savename+'/lyaploc_blv',mode='r',shape=(len(t)-1,M,1),dt
 #secondary_vector = np.memmap(savename+'/secondary_vector.dat',mode='w+',shape=(len(t),dimN,M,len(steplengthforsecondorder)),dtype='float64')
 contracted_CLVs = np.memmap(savename+'/contracted_clvs.dat',mode='w+',shape=(len(steplengthforsecondorder),len(t),dimN,M),dtype='float64') #(final_clv,init_clv)
 solution = np.memmap(savename+'/solution.dat',mode='w+',shape=(len(steplengthforsecondorder),len(t),dimN,M),dtype='float64')
-normalized_solution = np.memmap(savename+'/solution.dat',mode='w+',shape=(len(steplengthforsecondorder),len(t),dimN,M),dtype='float64')
+normalized_solution = np.memmap(savename+'/normalized_solution.dat',mode='w+',shape=(len(steplengthforsecondorder),len(t),dimN,M),dtype='float64')
 growth = np.memmap(savename+'/growth.dat',mode='w+',shape=(len(steplengthforsecondorder),len(t),M),dtype='float64')
 invCLV = np.memmap(savename+'/invCLV.dat',mode='r',shape=(len(t),dimN,M,1),dtype='float64')
 
@@ -59,3 +59,4 @@ for tn, (ts,te) in enumerate(zip(t[0:-20],t[1:-19])):
         np.memmap.flush(normalized_solution)
         
 print("Saveing results in folder "+savename+".")
+

@@ -41,6 +41,8 @@ np.save(savename+'/t',t)
 if testzeroclv: tendency = np.memmap(savename+'/tendency.dat',mode='w+',shape=(len(t),dimN,len(hs)),dtype='float64')
 if testzeroclv: tendcorr = np.memmap(savename+'/tendcorr.dat',mode='w+',shape=(len(t),len(hs)),dtype='float64')
 
+tendcorr = np.memmap(savename+'/tendcorr.dat',mode='r',shape=(len(t),len(hs)),dtype='float64')
+
 # Compute the exponents
 
 for count,h in enumerate(hs):
