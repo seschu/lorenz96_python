@@ -19,7 +19,6 @@ paraL96 = {'F1' : 10,
 # M number exponents
 M = paraL96['dimX'] + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
 dimN = paraL96['dimX'] + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
-<<<<<<< HEAD
 integrator = 'classic'
 dt = 0.01 #np.mean(np.diff(t))
 t = np.arange(0,1000,1)
