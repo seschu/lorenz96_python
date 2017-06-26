@@ -42,9 +42,9 @@ paraL96_1lay = {'F1' : 10,
 
 
 testzeroclv=True
-steplengthforsecondorder = np.arange(0,15,3)
-hs=[1.0, 0.5] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
-experiments = [paraL96_2lay,paraL96_2lay]#,paraL96_1lay]    
+
+hs=[1.0] #, 0.5] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
+experiments = [paraL96_1lay]#,paraL96_2lay]#,paraL96_1lay]    
 integrator = 'classic'
 
 # first test clv
@@ -72,9 +72,11 @@ for paraL96,h in product(experiments ,hs):
     dtau=np.mean(np.diff(paraL96['time']))
     t = paraL96['time'][timeintervall]
     correlation=[]
+    correlationv2=[]
     realgrowth=[]
     for clv in CLVs:
             correlation.append(np.memmap(savename+'/correlation_clv'+str(clv)+'.dat',mode='w+',shape=(len(intsteps),len(epsilons),len(paraL96['time'])),dtype='float64'))
+            correlationv2.append(np.memmap(savename+'/correlationv2_clv'+str(clv)+'.dat',mode='w+',shape=(len(intsteps),len(epsilons),len(paraL96['time'])),dtype='float64'))
             realgrowth.append(np.memmap(savename+'/realgrowth_clv'+str(clv)+'.dat',mode='w+',shape=(len(intsteps),len(epsilons),len(paraL96['time'])),dtype='float64'))
 
     CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(paraL96['time']),dimN,M),dtype='float64')
@@ -101,6 +103,7 @@ for paraL96,h in product(experiments ,hs):
                 for step, stepsize in enumerate(intsteps):
                     field.integrate_back(dtau)
                     correlation[n][step,en,tn] = np.sum(np.multiply(preprocessing.normalize(field.x['back'] - trajectory[tn+stepsize,:]),CLV[tn+stepsize,:,clv]))
+                    correlationv2[n][step,en,tn] = np.sum(np.multiply(preprocessing.normalize(field.x['back'] - trajectory[tn+stepsize,:]-epsilon*CLV[tn+stepsize,:,clv]),preprocessing.normalize(full_solution[stepsize,tn,:,clv])))
                     realgrowth[n][step,en,tn] = np.log(np.sqrt(np.sum((field.x['back'] - trajectory[tn+stepsize,:])**2))/epsilon)/(dtau*(stepsize))
                     
                 

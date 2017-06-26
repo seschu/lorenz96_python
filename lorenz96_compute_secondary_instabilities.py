@@ -38,10 +38,10 @@ paraL96_1lay = {'F1' : 10,
 
 
 testzeroclv=True
-steplengthforsecondorder = np.arange(0,15,3)
+steplengthforsecondorder = np.arange(0,100,1)
 hs=[1.0, 0.5] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
     
-for paraL96,h in product([paraL96_2lay, paraL96_1lay],hs):
+for paraL96,h in product([paraL96_1lay],hs):
     if not paraL96['2lay'] and not h == 1.0: print("1 lay only with h = 1.");break
     savename=paraL96['expname']+"_h_"+str(h)
     spinup = paraL96['spinup']        
@@ -72,28 +72,33 @@ for paraL96,h in product([paraL96_2lay, paraL96_1lay],hs):
     
     
     precision='float32'
-    
+    lensteparray = len(steplengthforsecondorder)
     contracted_CLVs = np.memmap(savename+'/contracted_clvs.dat',mode='w+',shape=(len(t),dimN,M),dtype=precision) #(final_clv,init_clv)
-    solution = np.memmap(savename+'/solution.dat',mode='w+',shape=(len(steplengthforsecondorder),len(t),dimN,M),dtype=precision)
-    full_solution = np.memmap(savename+'/full_solution.dat',mode='w+',shape=(len(steplengthforsecondorder),len(t),dimN,M),dtype=precision)
-    normalized_solution = np.memmap(savename+'/normalized_solution.dat',mode='w+',shape=(len(steplengthforsecondorder),len(t),dimN,M),dtype=precision)
-    growth = np.memmap(savename+'/growth.dat',mode='w+',shape=(len(steplengthforsecondorder),len(t),M),dtype=precision)
-  
-    
-    for tn, (ts,te) in enumerate(zip(t[0:-20],t[1:-19])):
-        dtau=te -ts
+    solution = np.memmap(savename+'/solution.dat',mode='w+',shape=(lensteparray,len(t),dimN,M),dtype=precision)
+    full_solution = np.memmap(savename+'/full_solution.dat',mode='w+',shape=(lensteparray,len(t),dimN,M),dtype=precision)
+    normalized_solution = np.memmap(savename+'/normalized_solution.dat',mode='w+',shape=(lensteparray,len(t),dimN,M),dtype=precision)
+    growth = np.memmap(savename+'/growth.dat',mode='w+',shape=(lensteparray,len(t),M),dtype=precision)
+    for tn, (ts,te) in enumerate(zip(t[0:-2],t[1:-1])):
         print(tn)
         contracted_CLVs[tn,:,:]=1/2*contract_func(invCLV[tn ,:,:],CLV[tn,:,:])
-        for n_step, len_step in enumerate(steplengthforsecondorder):
-            # multiply with growth factor   
-            for step in range(0,len_step+1):
-                solution[n_step,tn,:,:] = solution[n_step,tn,:,:] + (
-                dtau * np.multiply(np.exp(np.sum(dtau*lyaploc_clv[tn+step:tn+len_step,:,np.newaxis], axis =0)),np.multiply(contracted_CLVs[tn,:,:],np.exp(2*np.sum(dtau*lyaploc_clv[tn:tn+step,np.newaxis,:], axis =0))))
-                )
-            full_solution[n_step,tn,:,:] = np.matmul(CLV[tn,:,:],solution[n_step,tn,:,:])
-            growth[n_step,tn,:]=np.linalg.norm(full_solution[n_step,tn,:,:],axis=0)
-            normalized_solution[n_step,tn,:,:]=np.divide(solution[n_step,tn,:,:],np.linalg.norm(solution[n_step,tn,:,:],axis=0))
-        if tn % 50 == 0:
+        
+    
+    for tn, (ts,te) in enumerate(zip(t[0:-steplengthforsecondorder.max()-1],t[1:-steplengthforsecondorder.max()])):
+        dtau=te -ts
+        print(tn)
+        for n_ind, n_step in enumerate(steplengthforsecondorder):
+            if n_ind == 0: solution[n_ind,tn,:,:] = 0
+            else: solution[n_ind,tn,:,:] = solution[n_ind-1,tn,:,:] + (
+            dtau * np.multiply(np.exp(-np.memmap.sum(dtau*lyaploc_clv[tn:tn+n_step,:,np.newaxis], axis =0)),np.multiply(contracted_CLVs[tn+n_step,:,:],np.exp(2*np.memmap.sum(dtau*lyaploc_clv[tn:tn+n_step,np.newaxis,:], axis =0))))
+            )
+        for n_ind, n_step in enumerate(steplengthforsecondorder):
+            solution[n_ind,tn,:,:] = np.multiply(solution[n_ind,tn,:,:] ,np.exp(np.sum(dtau*lyaploc_clv[tn:tn+n_step,:,np.newaxis], axis =0)))
+            if n_ind == 0: continue
+            else:
+                full_solution[n_ind,tn,:,:] = np.matmul(CLV[tn+n_step,:,:],solution[n_step,tn,:,:])
+                growth[n_ind,tn,:]=np.log(np.linalg.norm(full_solution[n_ind,tn,:,:],axis=0))/(n_step*dtau)
+                normalized_solution[n_ind,tn,:,:]=np.divide(solution[n_ind,tn,:,:],np.linalg.norm(solution[n_ind,tn,:,:],axis=0))
+        if tn % 100 == 0:
             np.memmap.flush(solution)
             np.memmap.flush(contracted_CLVs)
             np.memmap.flush(normalized_solution)
