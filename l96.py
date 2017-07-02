@@ -15,8 +15,8 @@ def setupL96(para):
     # This section contains general stuff about the Lorenz 96 model and its derivatives
     #
     N = dimN = para['dimX'] 
-    F   = para['F1']
-        
+    try: F   = para['F1']
+    except: F   = para['F']
     
     I=np.arange(0,N,1)
     Im2=(I-2) % N
@@ -65,18 +65,16 @@ def contract_hess_l96_1layer_v2(a,b):
     dummyb = np.multiply(b[Im1,:],b[Ip1,:]-b[Im2,:])
     #dummyb2 = np.multiply(b[Im2,:],b[Im1,:])
     
-    return 2*np.matmul(a[:,I],dummyb)
+    return 2.0*np.matmul(a[:,I],dummyb)
 
 
 def contract_hess_l96_2layer_v2(a,bp,para):
-    rescale = para['RescaledY']
     dimX = para['dimX'] 
     dimY = para['dimY']
     c    = para['c']
     b    = para['b']
     NX = dimX
     NY = dimX*dimY    
-    N = dimX + dimX*dimY
     
     XI=np.array(range(0,NX,1))
     XIm2=(XI-2) % NX
@@ -87,9 +85,11 @@ def contract_hess_l96_2layer_v2(a,bp,para):
     
     YI=np.array(range(0,NY,1))
     #YIm2=(YI-2) % NY + NX
-    YIm1=(YI-1) % NY + NX
-    YIp1=(YI+1) % NY + NX
-    YIp2=(YI+2) % N
+    YIm1 = (YI-1) % NY + NX
+    YIp1 = (YI+1) % NY + NX
+    YIp2 = (YI+2) % NY + NX
+    YI   =  YI         + NX
+    
     
     dummybX = np.multiply(bp[XIm1,:],bp[XIp1,:]-bp[XIm2,:])
     dummybY = c*b*np.multiply(bp[YIp1,:],bp[YIp2,:]-bp[YIm1,:])
@@ -215,6 +215,7 @@ def setupL96_2layer(para):
         
     #L96Jac=None
     L96JacFull=None
+    L96Jac = None
     return L96,L96Jac,L96JacV,L96JacFull,dimN
 
 
@@ -414,9 +415,9 @@ class GinelliForward():
     
 
     # integrator choice
-    def integrate(self,f,y0, delta_t, integrator = None , method = None,jac = None, dt = None,max_step=0.0):
+    def integrate(self,f,y0, delta_t, integrator = None , method = None,jac = None, dt = None,max_step=0):
         from copy import copy
-        if jac: with_jacobian=True
+        if jac: with_jacobian=True;
         if not integrator: integrator=self.defaultintegrator
         if not integrator == 'classic' and not integrator == 'rk4':
             if integrator.lower() == 'lsoda':
@@ -431,7 +432,7 @@ class GinelliForward():
             r.integrate(r.t+delta_t)
             return r.y,r.t
         elif integrator == 'classic':
-            intres = odeint(lambda x,t : f(t,x), y0, [self.step_t,self.step_t+delta_t], Dfun = self.jacobianfull,rtol=1e-10,atol=1e-10)
+            intres = odeint(lambda x,t : f(t,x), y0, [self.step_t,self.step_t+delta_t], mxstep = 1000000, Dfun = jac,rtol=1e-10,atol=1e-10 )
             return intres[-1,:],self.step_t+delta_t
         elif integrator == 'rk4':
             tend=self.RK4(f)
@@ -445,7 +446,7 @@ class GinelliForward():
     def integrate_back(self,delta_t,integrator=None,dt= None):
         if not integrator: integrator=self.defaultintegrator
         self.xold['back'] = self.x['back']
-        self.x['back'], self.step_t = self.integrate(self.tendency, self.x['back'], delta_t,integrator=integrator,dt= dt,max_step = 100000,jac=self.jacobian)
+        self.x['back'], self.step_t = self.integrate(self.tendency, self.x['back'], delta_t,integrator=integrator)#,dt= dt,max_step = 1,jac=None)#self.jacobian)
     
     # integrate background and tangent linear at the same time
     def integrate_all(self, delta_t, normalize = False,integrator=None,dt= None):

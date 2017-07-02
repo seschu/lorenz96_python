@@ -39,15 +39,15 @@ paraL96_1lay = {'F1' : 10,
 
 resultsfolder = 'secondaryinstabilities'
 if not os.path.exists(resultsfolder): os.mkdir(resultsfolder)
-experiments = [paraL96_2lay]
+experiments = [paraL96_1lay]
 
 testzeroclv=True
-steplengthforsecondorder = np.arange(0,15,3)
+
 hs=[1.0] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
 
 compute = True #compute array projections
 
-averageintervall=np.arange(4000,8500)
+averageintervall=np.arange(1500,8500)
 
 for paraL96,h in product(experiments,hs):
     #print(paraL96,h)
@@ -68,7 +68,7 @@ for paraL96,h in product(experiments,hs):
     
     #CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(paraL96['time']),dimN,M,1),dtype='float64')
     #lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(paraL96['time']),M,1),dtype='float64')
-    precision='float32'
+    precision='float64'
     if compute: solution = np.memmap(savename+'/solution.dat',mode='r',shape=(len(steplengthforsecondorder),len(paraL96['time']),dimN,M),dtype=precision)
     #full_solution = np.memmap(savename+'/full_solution.dat',mode='r',shape=(len(steplengthforsecondorder),len(paraL96['time']),dimN,M),dtype=precision)
     #normalized_solution = np.memmap(savename+'/normalized_solution.dat',mode='r',shape=(len(steplengthforsecondorder),len(paraL96['time']),dimN,M),dtype=precision)
@@ -83,28 +83,32 @@ for paraL96,h in product(experiments,hs):
             print(tn)
             dummy = dummy + np.sum(np.abs(solution[:,tn:tn+10,:,:]),axis=1).copy()
             #np.memmap.flush(solution)
-        projections[:,:,:]=np.divide(dummy,np.linalg.norm(dummy,axis=1,keepdims=True))
+        projections[1:,:,:]=np.divide(dummy[1:,:,:],np.linalg.norm(dummy[1:,:,:],axis=1,keepdims=True))
     for step, len_step in enumerate(steplengthforsecondorder):
-        fig, axarr = plt.subplots(2, figsize = (7,6))
-        X,Y = np.meshgrid(range(0,dimN),range(0,dimN))
-        im=axarr[0].pcolormesh(X,Y,projections[step,:,:])
+        print(step,len_step)
+        if paraL96['2lay']: fig, axarr = plt.subplots(2, figsize = (7,6))
+        else: fig = plt.figure(); axarr=[0];axarr[0]=plt.gca()
+        X,Y = np.meshgrid(range(1,dimN+1),range(1,dimN+1))
+        im=axarr[0].contourf(X,Y,projections[step,:,:])
         axarr[0].set_xlabel('Linear Perturbation',fontsize = 8)
         axarr[0].set_ylabel('Second Order Projection onto CLVs',fontsize = 8)           
         fig.colorbar(im, ax=axarr[0])
         dt=np.mean(np.diff(paraL96['time']))
         axarr[0].set_title('Projection onto CLVs (y axis) if linear perturbation\n along CLV (x axis), Delay '+r'$\tau$\ ='+str(steplengthforsecondorder[step]*dt)+' MTU',
                   fontsize = 8)
-        X,Y = np.meshgrid(range(1,61),range(1,61))
-        im2=axarr[1].pcolormesh(X,Y,projections[step,0:60,0:60])
-        axarr[1].set_xlabel('Linear Perturbation',fontsize = 8)
-        axarr[1].set_ylabel('Second Order Projection onto CLVs',fontsize = 8)           
-        fig.colorbar(im2, ax=axarr[1])
-        dt=np.mean(np.diff(paraL96['time']))
-        axarr[1].set_title('Projection onto CLVs (y axis) if linear perturbation\n along CLV (x axis), Delay '+r'$\tau$\ ='+str(steplengthforsecondorder[step]*dt)+' MTU',
-                  fontsize = 8)
+        if paraL96['2lay']: 
+            X,Y = np.meshgrid(range(1,np.min((61,dimN+1))),range(1,np.min((61,dimN+1))))
+            im2=axarr[1].contourf(X,Y,projections[step,0:np.min((60,dimN)),0:np.min((60,dimN))])
+            axarr[1].set_xlabel('Linear Perturbation',fontsize = 8)
+            axarr[1].set_ylabel('Second Order Projection onto CLVs',fontsize = 8)           
+            fig.colorbar(im2, ax=axarr[1])
+            dt=np.mean(np.diff(paraL96['time']))
+            axarr[1].set_title('Projection onto CLVs (y axis) if linear perturbation\n along CLV (x axis), Delay '+r'$\tau$\ ='+str(steplengthforsecondorder[step]*dt)+' MTU',
+                      fontsize = 8)
         
         fig.tight_layout()
         figname = "2_lay_projections_h_"+str(h)+"_step_"+str(step) if paraL96['2lay'] else "1_lay_projections_step_"+str(step)
         fig.savefig(resultsfolder+"/"+figname+".pdf")
         fig.savefig(resultsfolder+"/"+figname+".png")
+        plt.close(fig)
     if compute: np.save(savename+"/projections",projections)
