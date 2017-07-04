@@ -41,6 +41,8 @@ resultsfolder = 'secondaryinstabilities'
 if not os.path.exists(resultsfolder): os.mkdir(resultsfolder)
 experiments = [paraL96_1lay]
 
+precision='float64'
+
 testzeroclv=True
 
 hs=[1.0] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
@@ -68,11 +70,11 @@ for paraL96,h in product(experiments,hs):
     
     #CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(paraL96['time']),dimN,M,1),dtype='float64')
     #lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(paraL96['time']),M,1),dtype='float64')
-    precision='float64'
-    if compute: solution = np.memmap(savename+'/solution.dat',mode='r',shape=(len(steplengthforsecondorder),len(paraL96['time']),dimN,M),dtype=precision)
-    #full_solution = np.memmap(savename+'/full_solution.dat',mode='r',shape=(len(steplengthforsecondorder),len(paraL96['time']),dimN,M),dtype=precision)
-    #normalized_solution = np.memmap(savename+'/normalized_solution.dat',mode='r',shape=(len(steplengthforsecondorder),len(paraL96['time']),dimN,M),dtype=precision)
-    #growth = np.memmap(savename+'/growth.dat',mode='r',shape=(len(steplengthforsecondorder),len(paraL96['time']),M),dtype=precision)
+    
+    if compute: solution = np.memmap(savename+'/solution.dat',mode='r',shape=(len(paraL96['time']),len(steplengthforsecondorder),dimN,M),dtype=precision)
+    #full_solution = np.memmap(savename+'/full_solution.dat',mode='r',shape=(len(paraL96['time']),len(steplengthforsecondorder),dimN,M),dtype=precision)
+    #normalized_solution = np.memmap(savename+'/normalized_solution.dat',mode='r',shape=(len(paraL96['time']),len(steplengthforsecondorder),dimN,M),dtype=precision)
+    #growth = np.memmap(savename+'/growth.dat',mode='r',shape=(len(paraL96['time']),len(steplengthforsecondorder),M),dtype=precision)
     if compute:  projections=np.zeros((len(steplengthforsecondorder),dimN,M))
     else: projections = np.load(savename+"/projections.npy")
     if compute:
@@ -81,7 +83,7 @@ for paraL96,h in product(experiments,hs):
         dummy = np.zeros((len(steplengthforsecondorder),solution.shape[2],solution.shape[3]))
         for tn in averageintervall[np.arange(0,averageintervall.shape[0],10)]:
             print(tn)
-            dummy = dummy + np.sum(np.abs(solution[:,tn:tn+10,:,:]),axis=1).copy()
+            dummy = dummy + np.sum(np.abs(solution[tn:tn+10,:,:,:]),axis=0).copy()
             #np.memmap.flush(solution)
         projections[1:,:,:]=np.divide(dummy[1:,:,:],np.linalg.norm(dummy[1:,:,:],axis=1,keepdims=True))
     for step, len_step in enumerate(steplengthforsecondorder):
@@ -94,7 +96,7 @@ for paraL96,h in product(experiments,hs):
         axarr[0].set_ylabel('Second Order Projection onto CLVs',fontsize = 8)           
         fig.colorbar(im, ax=axarr[0])
         dt=np.mean(np.diff(paraL96['time']))
-        axarr[0].set_title('Projection onto CLVs (y axis) if linear perturbation\n along CLV (x axis), Delay '+r'$\tau$\ ='+str(steplengthforsecondorder[step]*dt)+' MTU',
+        axarr[0].set_title('Projection onto CLVs (y axis) if linear perturbation\n along CLV (x axis), Delay '+r'$\tau$ ='+str(steplengthforsecondorder[step]*dt)+' MTU',
                   fontsize = 8)
         if paraL96['2lay']: 
             X,Y = np.meshgrid(range(1,np.min((61,dimN+1))),range(1,np.min((61,dimN+1))))
@@ -103,7 +105,7 @@ for paraL96,h in product(experiments,hs):
             axarr[1].set_ylabel('Second Order Projection onto CLVs',fontsize = 8)           
             fig.colorbar(im2, ax=axarr[1])
             dt=np.mean(np.diff(paraL96['time']))
-            axarr[1].set_title('Projection onto CLVs (y axis) if linear perturbation\n along CLV (x axis), Delay '+r'$\tau$\ ='+str(steplengthforsecondorder[step]*dt)+' MTU',
+            axarr[1].set_title('Projection onto CLVs (y axis) if linear perturbation\n along CLV (x axis), Delay '+r'$\tau$ ='+str(steplengthforsecondorder[step]*dt)+' MTU',
                       fontsize = 8)
         
         fig.tight_layout()

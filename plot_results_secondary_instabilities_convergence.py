@@ -39,7 +39,7 @@ paraL96_1lay = {'F1' : 10,
 
 resultsfolder = 'secondaryinstabilities'
 if not os.path.exists(resultsfolder): os.mkdir(resultsfolder)
-experiments = [paraL96_2lay, paraL96_1lay]
+experiments = [paraL96_1lay]
 
 testzeroclv=True
 steplengthforsecondorder = np.arange(0,15,3)
