@@ -20,7 +20,7 @@ paraL96_2lay = {'F1' : 10,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_2layer',
-           'time' : np.arange(0,2000,0.1),
+           'time' : np.arange(0,1000,0.1),
            'spinup' : 100,
            '2lay' : True
            }

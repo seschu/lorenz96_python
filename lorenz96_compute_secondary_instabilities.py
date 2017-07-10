@@ -7,6 +7,7 @@ import scipy.linalg as linalg
 from itertools import product
 
 
+
 # these are our constants
 paraL96_2lay = {'F1' : 10,
            'F2' : 0,
@@ -39,7 +40,7 @@ paraL96_1lay = {'F1' : 10,
 
 testzeroclv=True
 steplengthforsecondorder = np.arange(0,100,1)
-hs=[1.0, 0.5] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
+hs=[1.0]#, 0.5] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
 precision='float64'    
 for paraL96,h in product([paraL96_1lay],hs):
     if not paraL96['2lay'] and not h == 1.0: print("1 lay only with h = 1.");break

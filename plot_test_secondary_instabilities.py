@@ -45,13 +45,15 @@ paraL96_1lay = {'F1' : 10,
 
 testzeroclv=True
 resultsfolder = "secondaryinstabilities"
-
-hs=[1.0, 0.5] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
+if not os.path.exists(resultsfolder): os.mkdir(resultsfolder)
+    
+hs=[1.0]#, 0.5] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
 experiments = [paraL96_1lay]    
 integrator = 'classic'
 
 # first test clv
-
+min_epsilon=10**-9
+max_epsilon=1
 
 
 for paraL96,h in product(experiments ,hs):
@@ -75,85 +77,116 @@ for paraL96,h in product(experiments ,hs):
         timeintervall = np.load(savename+"/timeintervall.npy")
         CLVs = np.load(savename+"/CLVs.npy")
         t = paraL96['time']
-        dtau = np.diff(t).mean()
+        dtau = np.diff(paraL96['time']).mean()
         
-        measured=np.memmap(savename+'/measuredgrowth.dat',mode='r',shape=(len(paraL96['time']),len(CLVs),len(intsteps)),dtype='float64')
         growth = np.memmap(savename+'/growth.dat',mode='r',shape=(len(t),lensteparray,M),dtype='float64')
         lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(t),M),dtype='float64')
-
         
+        if not os.path.exists(savename): os.mkdir(savename)
+    
+        for fold in ['erroranalysis']:
+            if not os.path.exists(resultsfolder+"/"+fold): os.mkdir(resultsfolder+"/"+fold)
+        
+        precisioncorr = 'float64'        
         for clv in CLVs:
-            correlation = np.memmap(savename+'/correlation_only_1_clv'+str(clv)+'.dat',mode='r',shape=(len(paraL96['time']),len(intsteps),len(epsilons)),dtype='float64')
-            correlationv2 = np.memmap(savename+'/correlation_1and2_clv'+str(clv)+'.dat',mode='r',shape=(len(paraL96['time']),len(intsteps),len(epsilons)),dtype='float64')
-            correlationv3 = np.memmap(savename+'/correlation_only_2_clv'+str(clv)+'.dat',mode='r',shape=(len(paraL96['time']),len(intsteps),len(epsilons)),dtype='float64')
-            realgrowth = np.memmap(savename+'/realgrowth_clv'+str(clv)+'.dat',mode='r',shape=(len(t),len(intsteps),len(epsilons)),dtype='float64')
-            normerror = np.memmap(savename+'/normerror_clv'+str(clv)+'.dat',mode='r',shape=(len(paraL96['time']),len(intsteps),len(epsilons)),dtype='float64')
+            correlation = np.memmap(savename+'/correlation_only_1_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
+            correlationv2 = np.memmap(savename+'/correlation_1and2_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
+            correlationv3 = np.memmap(savename+'/correlation_only_2_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
+            realgrowth = np.memmap(savename+'/realgrowth_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
+            normerror = np.memmap(savename+'/normerror_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
+            normnonlin = np.memmap(savename+'/normnonlin_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
             
-            CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(t),dimN,M),dtype='float64')
-            lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(t),M),dtype='float64')
-            trajectory = np.memmap(savename+'/trajectory.dat',mode='r',shape=(len(t),dimN),dtype='float64')
+            CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(paraL96['time']),dimN,M),dtype='float64')
+            lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(paraL96['time']),M),dtype='float64')
+            trajectory = np.memmap(savename+'/trajectory.dat',mode='r',shape=(len(paraL96['time']),dimN),dtype='float64')
+        
+            
+            imin = np.where(epsilons==min_epsilon)[0][0]
+            imax = np.where(epsilons==max_epsilon)[0][0]+1
+            X,Y = np.meshgrid(np.log10(epsilons[imin:imax]),intsteps[1:]*dtau)
+            
         
             maskcorr = np.load(savename+"/maskcorr.npy")
             fig=plt.figure()
-            X,Y = np.meshgrid(np.log10(epsilons),intsteps*dtau)
-            plt.contourf(X,Y,np.mean(np.abs(correlation[timeintervall,:,:]),axis =0),np.arange(0, 1.1, .1))
+            plt.contourf(X,Y,np.transpose(np.mean(np.abs(correlation)[:,imin:imax,:],axis =0)),np.arange(0, 1.1, .1))
             plt.xlabel(r'$log(\epsilon)$')
             plt.ylabel(r'time [MTU]')
             plt.colorbar()
             plt.title('Average Correlation of non-linear perturbation\n after time t (y axis) along CLV '+str(clv)+" using 1st order")
-            fig.savefig(resultsfolder+"/CLV_"+str(clv)+"_correlation_first_order.pdf")
-            fig.savefig(resultsfolder+"/CLV_"+str(clv)+"_correlation_first_order.png", dpi =400)
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_correlation_first_order.pdf")
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_correlation_first_order.png", dpi =400)
             plt.close(fig)
+
             maskcorr = np.load(savename+"/maskcorr.npy")
+
             fig=plt.figure()
-            X,Y = np.meshgrid(np.log10(epsilons),intsteps*dtau)
-            plt.contourf(X,Y,np.mean(np.abs(correlationv2[timeintervall,:,:]),axis =0),np.arange(0, 1.1, .1))
+            plt.contourf(X,Y,np.transpose(np.mean(np.abs(correlationv2)[:,imin:imax,:],axis =0)),np.arange(0, 1.1, .1))
             plt.xlabel(r'$log(\epsilon)$')
             plt.ylabel(r'time [MTU]')
             plt.colorbar()
             plt.title('Average Correlation of non-linear perturbation\n after time t (y axis) along CLV '+str(clv)+" using 1st and 2nd order")
-            fig.savefig(resultsfolder+"/CLV_"+str(clv)+"_correlation_firstandsecond_order.pdf")
-            fig.savefig(resultsfolder+"/CLV_"+str(clv)+"_correlation_firstandsecond_order.png", dpi =400)
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_correlation_firstandsecond_order.pdf")
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_correlation_firstandsecond_order.png", dpi =400)
             plt.close(fig)
             
             fig=plt.figure()
-            X,Y = np.meshgrid(np.log10(epsilons),intsteps*dtau)
-            plt.contourf(X,Y,np.mean(np.abs(correlationv3[timeintervall,:,:]),axis =0),np.arange(0, 1.1, .1))
+            plt.contourf(X,Y,np.transpose(np.mean(np.abs(correlationv3)[:,imin:imax,:],axis =0)),np.arange(0, 1.1, .1))
             plt.xlabel(r'$log(\epsilon)$')
             plt.ylabel(r'time [MTU]')
             plt.colorbar()
             plt.title('Average Correlation of non-linear perturbation\n after time t (y axis) along CLV '+str(clv)+" using only 2nd order")
-            fig.savefig(resultsfolder+"/CLV_"+str(clv)+"_correlation_second_order.pdf")
-            fig.savefig(resultsfolder+"/CLV_"+str(clv)+"_correlation_second_order.png", dpi =400)
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_correlation_second_order.pdf")
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_correlation_second_order.png", dpi =400)
             plt.close(fig)
             
             fig=plt.figure()
             le = np.mean(lyaploc_clv[timeintervall,clv-1], axis =0)
-            X,Y = np.meshgrid(np.log10(epsilons),intsteps*dtau)
             levels = [le,100.*np.abs(le)] # [le-np.abs(le)*0.1,le,le+np.abs(le)*0.1]
-            im1p = plt.contour(X,Y,np.mean(realgrowth[timeintervall,:,:],axis =0),levels=levels,colors=('k'),linestyles=('-'),linewidths=(2,))
-            im1 = plt.contourf(X,Y,np.mean(realgrowth[timeintervall,:,:],axis =0))
+            im1p = plt.contour(X,Y,np.transpose(np.mean(realgrowth[:,imin:imax,:],axis =0)),levels=levels,colors=('k'),linestyles=('-'),linewidths=(2,))
+            im1 = plt.contourf(X,Y,np.transpose(np.mean(realgrowth[:,imin:imax,:],axis =0)))
             plt.clabel(im1p, fmt = '%2.2f', colors = 'k', fontsize = 14)
             fig.colorbar(im1)
             plt.xlabel(r'$log(\epsilon)$')
             plt.ylabel(r'time [MTU]')
             plt.title('Growth rate of non-linear perturbation\n after time t (y axis) along CLV '+str(clv)+" \n "+r"($\lambda$ = "+"{0:2.2f}".format(le[()])+") using 1st and 2nd order")
-            fig.savefig(resultsfolder+"/CLV_"+str(clv)+"_growthnonlinear.pdf")
-            fig.savefig(resultsfolder+"/CLV_"+str(clv)+"_growthnonlinear.png", dpi =400)
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_growthnonlinear.pdf")
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_growthnonlinear.png", dpi =400)
             plt.close(fig)
         
             fig=plt.figure()
-            im2 = plt.contourf(X,Y,np.log(np.mean(normerror[timeintervall,:,:], axis = 0)))
+            im2 = plt.contourf(X,Y,np.log(np.transpose(np.mean(normerror[:,imin:imax,:], axis = 0))))
             fig.colorbar(im2)
             plt.xlabel(r'$log(\epsilon)$')
             plt.ylabel(r'time [MTU]')
-            plt.title('log of Norm error of 1st and 2nd order in percent \n after time t (y axis) along CLV '+str(clv))
-            fig.savefig(resultsfolder+"/CLV_"+str(clv)+"_normerror.pdf")
-            fig.savefig(resultsfolder+"/CLV_"+str(clv)+"_normerror.png", dpi =400)
+            plt.title('Log of ratio of norm error of 1st and 2nd order \n and norm of nonlinear prediction \n after time t (y axis) along CLV '+str(clv))
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_normerror.pdf")
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_normerror.png", dpi =400)
             #fig.tight_layout()
             plt.close(fig)
+            
+            fig=plt.figure()
+            for ist in range(0,normerror.shape[2]):
+                plt.plot(np.log(epsilons),np.log(np.mean(normerror[:,:,ist], axis = 0))/intsteps[ist],label=str(intsteps[ist]))
+            plt.xlabel(r'$\log(\epsilon)')
+            plt.ylabel(r'size of error')
+            plt.legend()
+            plt.title('Log of relative difference between 1st and 2nd order \n and norm of nonlinear prediction \n after time t (y axis) along CLV '+str(clv))
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_errorgrowth.pdf")
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_errorgrowth.png", dpi =400)
+            plt.close(fig)
+            
+            
+            fig=plt.figure()
+            im2 = plt.contourf(X,Y,np.log(np.transpose(np.mean(normnonlin[:,imin:imax,:], axis = 0))))
+            fig.colorbar(im2)
+            plt.xlabel(r'$log(\epsilon)$')
+            plt.ylabel(r'time [MTU]')
+            plt.title('Log of norm of nonlinear prediction \n after time t (y axis) along CLV '+str(clv))
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_normnonlin.pdf")
+            fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_normnonlin.png", dpi =400)
+            plt.close(fig)
         
-#        contracted_CLVs = np.memmap(savename+'/contracted_clvs.dat',mode='r',shape=(len(t),dimN,M),dtype=precision) #(final_clv,init_clv)
+#        contracted_CLVs = np.memmap(savename+'/contracted_clvs.dat',mode='r',shape=(len(paraL96['time']),dimN,M),dtype=precision) #(final_clv,init_clv)
 #        fig=plt.figure()
 #        plt.contourf(np.mean(contracted_CLVs[2000:8000,:,0:30],axis=0),axis =0)
 #        plt.colorbar()
