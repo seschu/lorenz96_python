@@ -46,7 +46,7 @@ experiments = [paraL96_1lay]
 
 precision='float64'
 
-testzeroclv=True
+testzeroclv=False
 
 hs=[1.0] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
 
@@ -133,7 +133,7 @@ for paraL96,h in product(experiments,hs):
         fig.tight_layout()
         figname = "2_lay_projections_h_"+str(h)+"_step_"+str(step) if paraL96['2lay'] else "1_lay_projections_step_"+str(step)
         fig.savefig(resultsfolder+"/projections/"+figname+".pdf")
-        fig.savefig(resultsfolder+"/correlations/"+figname+".png", dpi =400)
+        fig.savefig(resultsfolder+"/projections/"+figname+".png", dpi =400)
         plt.close(fig)
         
         
@@ -162,8 +162,8 @@ for paraL96,h in product(experiments,hs):
         
         fig.tight_layout()
         figname = "2_lay_correlations_h_"+str(h)+"_step_"+str(step) if paraL96['2lay'] else "1_lay_correlations_step_"+str(step)
-        fig.savefig(resultsfolder+"/"+figname+".pdf")
-        fig.savefig(resultsfolder+"/"+figname+".png", dpi =400)
+        fig.savefig(resultsfolder+"/correlations/"+figname+".pdf")
+        fig.savefig(resultsfolder+"/correlations/"+figname+".png", dpi =400)
         plt.close(fig)
     if compute: 
         np.save(savename+"/projections",projections)

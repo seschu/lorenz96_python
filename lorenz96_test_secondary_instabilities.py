@@ -55,12 +55,12 @@ experiments = [paraL96_1lay]#,paraL96_2lay]#,paraL96_1lay]
 integrator = 'classic'
 
 # first test clv
-epsilons=10.0**np.arange(-10,1,1,dtype = precision)
-intsteps=np.arange(0,50,1)
+epsilons=10.0**np.arange(-5,1.1,0.5,dtype = precision)
+intsteps=np.arange(0,100,1)
 
 
-CLVs=np.arange(1,45,3)
-timeintervall = range(2000,8000,100)
+CLVs=[1,8,14,30] # ,13, 30]#np.arange(1,2,1)
+timeintervall = range(2000,8000,1000)
 for paraL96,h in product(experiments ,hs):
     if not paraL96['2lay'] and not h == 1.0: print("1 lay only with h = 1.");break
     savename=paraL96['expname']+"_h_"+str(h)
@@ -86,6 +86,10 @@ for paraL96,h in product(experiments ,hs):
     correlationv3=[]
     realgrowth=[]
     normerror = []
+    normerror_1st = []
+    normerrorrel = []
+    normerrorrel_1st = []
+    normerrorrel_2nd = []
     normnonlin =[]
     
     for clv in CLVs:
@@ -93,6 +97,10 @@ for paraL96,h in product(experiments ,hs):
         correlationv2.append(np.memmap(savename+'/correlation_1and2_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
         correlationv3.append(np.memmap(savename+'/correlation_only_2_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
         normerror.append(np.memmap(savename+'/normerror_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
+        normerror_1st.append(np.memmap(savename+'/normerror_1st_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
+        normerrorrel_1st.append(np.memmap(savename+'/normerrorrel_1st_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
+        normerrorrel_2nd.append(np.memmap(savename+'/normerrorrel_2nd_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
+        normerrorrel.append(np.memmap(savename+'/normerrorrel_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
         normnonlin.append(np.memmap(savename+'/normnonlin_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
         realgrowth.append(np.memmap(savename+'/realgrowth_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
  
@@ -142,19 +150,28 @@ for paraL96,h in product(experiments ,hs):
                     
                     realgrowth[nc][i,en,step] = np.log(norm(nonlinear_prediction)/epsilon)/(dtau*(stepsize))
                     
-                    normerror[nc][i,en,step] = norm(nonlinear_prediction - firstandsecondorder_prediction)/norm(nonlinear_prediction)
+                    normerror[nc][i,en,step] = norm(nonlinear_prediction - firstandsecondorder_prediction)
+                    
+                    normerror_1st[nc][i,en,step] = norm(nonlinear_prediction - firstorder_prediction)
+                    
+                    normerrorrel[nc][i,en,step] = norm(nonlinear_prediction - firstandsecondorder_prediction)/norm(nonlinear_prediction)
+                    
+                    normerrorrel_1st[nc][i,en,step] = norm(nonlinear_prediction - firstorder_prediction)/norm(nonlinear_prediction)
+                    
+                    normerrorrel_2nd[nc][i,en,step] = norm(nonlinear_prediction - secondorder_prediction)/norm(nonlinear_prediction)
                     
                     normnonlin[nc][i,en,step] = norm(nonlinear_prediction)
                     
                     
                     
-        if i % 10 == 0:
+        if i % 50 == 0:
             for nc, clv in enumerate(CLVs):
                 np.memmap.flush(realgrowth[nc])
                 np.memmap.flush(correlation[nc])
                 np.memmap.flush(correlationv2[nc])
                 np.memmap.flush(correlationv3[nc])
                 np.memmap.flush(normerror[nc])
+                np.memmap.flush(normerror_1st[nc])
             print("flushed")
 
     for nc, clv in enumerate(CLVs):    
@@ -163,6 +180,7 @@ for paraL96,h in product(experiments ,hs):
         np.memmap.flush(correlationv2[nc])
         np.memmap.flush(correlationv3[nc])
         np.memmap.flush(normerror[nc])
+        np.memmap.flush(normerror_1st[nc])
 
     np.save(savename+"/timeintervall", timeintervall)
     np.save(savename+"/epsilons",epsilons)        

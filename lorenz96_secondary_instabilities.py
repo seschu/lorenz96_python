@@ -42,8 +42,8 @@ paraL96_1lay = {'F1' : 10,
 
 testzeroclv=True
 
-hs=[ 0.25 ] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
-experiments = [paraL96_2lay]
+hs=[ 1.0 ] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
+experiments = [paraL96_1lay]
 
 for paraL96,h in product(experiments,hs):
     if not paraL96['2lay'] and not h == 1.0: print("1 lay only with h = 1.");break
@@ -87,7 +87,7 @@ for paraL96,h in product(experiments,hs):
     for key in paraL96.keys(): print(key+' : '+str(paraL96[key]))
     if paraL96['2lay']: L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96_2layer(paraL96)
     else: L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96(paraL96)
-    field = l96.GinelliForward(dimN,M,tendfunc = L96, jacfunc = None, jacVfunc = L96JacV,jacfull=L96JacFull, integrator=integrator)
+    field = l96.GinelliForward(dimN,M,tendfunc = L96, jacfunc = L96Jac, jacVfunc = L96JacV,jacfull=L96JacFull, integrator=integrator)
     # initialize fields 
     print("\nInitialize ...")
     field.init_back('random',0.1)

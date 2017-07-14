@@ -432,7 +432,7 @@ class GinelliForward():
             r.integrate(r.t+delta_t)
             return r.y,r.t
         elif integrator == 'classic':
-            intres = odeint(lambda x,t : f(t,x), y0, [self.step_t,self.step_t+delta_t], mxstep = 1000000, Dfun = jac,rtol=1e-13,atol=1e-13 )
+            intres = odeint(lambda x,t : f(t,x), y0, [self.step_t,self.step_t+delta_t], mxstep=0, Dfun = jac,rtol=1e-12,atol=1e-16 )
             return intres[-1,:],self.step_t+delta_t
         elif integrator == 'rk4':
             tend=self.RK4(f)
