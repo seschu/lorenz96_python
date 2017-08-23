@@ -25,7 +25,7 @@ def setupL96(para):
     #Ip2=(I+2) % N
     
     L96 = lambda t,x: (x[Ip1]-x[Im2]) * x[Im1]- x[I] + F
-    L96Jac = lambda x,t: np.stack((-x[Im1],x[Ip1]-x[Im2],-1.0*np.ones(N),x[Im1]),axis = 1)
+    L96Jac = lambda x,t: np.array(np.stack((-x[Im1],x[Ip1]-x[Im2],-1.0*np.ones(N),x[Im1]),axis = 1))
     L96JacV = lambda x,v,t : np.multiply(v[Im2,:],-x[Im1,np.newaxis])+np.multiply(v[Im1,:],x[Ip1,np.newaxis]-x[Im2,np.newaxis])-v[I,:]+np.multiply(v[Ip1,:],x[Im1,np.newaxis])
     
     #L96Full = lambda t,x: np.concatenate((L96(x[0:dimN],t), np.reshape(L96JacV(x[0:dimN],np.reshape(x[dimN:],(dimN,dimN)),t),((dimN)**2,1)))
@@ -227,7 +227,7 @@ def setupL96_2layer(para):
 class GinelliForward():
     import scipy.linalg.lapack as lapack
     import numpy as np
-    
+
     
     
     def __init__(self, dimN, dimM, tendfunc=None, jacfunc=None, jacVfunc=None, jacfull=None, ml=None, mu=None, integrator='classic'):
@@ -301,7 +301,8 @@ class GinelliForward():
         self.mu = mu 
     
         self.equilibrium = None
-
+        self.rtol = None
+        self.atol = None
    
     def RK4(self,f):
         return lambda t, y, dt: (
@@ -423,7 +424,7 @@ class GinelliForward():
             if integrator.lower() == 'lsoda':
                 y0 = copy(y0)
                 r = ode(f, jac ).set_integrator(integrator,with_jacobian=with_jacobian,lband=None,uband = None, 
-                rtol=None, atol=None, first_step=0.0,
+                rtol=self.rtol, atol=self.atol, first_step=0.0,
                 min_step=0.0, ixpr=0,  max_order_ns=12,max_order_s=5)
          
             else:
@@ -432,7 +433,7 @@ class GinelliForward():
             r.integrate(r.t+delta_t)
             return r.y,r.t
         elif integrator == 'classic':
-            intres = odeint(lambda x,t : f(t,x), y0, [self.step_t,self.step_t+delta_t], mxstep=0, Dfun = jac,rtol=1e-12,atol=1e-16 )
+            intres = odeint(lambda x,t : f(t,x), y0, [self.step_t,self.step_t+delta_t], mxstep=0, Dfun = jac,rtol=self.rtol,atol=self.atol)
             return intres[-1,:],self.step_t+delta_t
         elif integrator == 'rk4':
             tend=self.RK4(f)
@@ -446,7 +447,7 @@ class GinelliForward():
     def integrate_back(self,delta_t,integrator=None,dt= None):
         if not integrator: integrator=self.defaultintegrator
         self.xold['back'] = self.x['back']
-        self.x['back'], self.step_t = self.integrate(self.tendency, self.x['back'], delta_t,integrator=integrator)#,dt= dt,max_step = 1,jac=None)#self.jacobian)
+        self.x['back'], self.step_t = self.integrate(self.tendency, self.x['back'], delta_t,integrator=integrator,dt= dt)# ,max_step = 1,jac=None)#self.jacobian)
     
     # integrate background and tangent linear at the same time
     def integrate_all(self, delta_t, normalize = False,integrator=None,dt= None):

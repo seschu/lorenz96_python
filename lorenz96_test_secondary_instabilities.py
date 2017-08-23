@@ -28,7 +28,7 @@ paraL96_2lay = {'F1' : 10,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_2layer',
-           'time' : np.arange(0,2000,0.1),
+           'time' : np.arange(0,500,0.1),
            'spinup' : 100,
            '2lay' : True
            }
@@ -42,7 +42,7 @@ paraL96_1lay = {'F1' : 10,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_1layer',
-           'time' : np.arange(0,1000,0.1),
+           'time' : np.arange(0,500,0.1),
            'spinup' : 100,
            '2lay' : False
            }
@@ -52,21 +52,22 @@ testzeroclv=True
 
 hs=[1.0] #, 0.5] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
 experiments = [paraL96_1lay]#,paraL96_2lay]#,paraL96_1lay]    
-integrator = 'classic'
+integrator = 'rk4'
 
 # first test clv
-epsilons=10.0**np.arange(-5,1.1,0.5,dtype = precision)
+epsilons=10.0**np.arange(-8,1.5,0.1,dtype = precision)
 intsteps=np.arange(0,100,1)
 
 
 CLVs=[1,8,14,30] # ,13, 30]#np.arange(1,2,1)
-timeintervall = range(2000,8000,1000)
+timeintervall = range(2000,4000,500)
 for paraL96,h in product(experiments ,hs):
     if not paraL96['2lay'] and not h == 1.0: print("1 lay only with h = 1.");break
     savename=paraL96['expname']+"_h_"+str(h)
     spinup = paraL96['spinup']        
     paraL96=np.load(savename+"/paraL96.npy")
     paraL96=paraL96[()]
+    dt = np.mean(np.diff(paraL96['time']))
     # M number exponents
     if paraL96['2lay']:
         M = paraL96['dimX'] + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
@@ -113,6 +114,8 @@ for paraL96,h in product(experiments ,hs):
     else: L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96(paraL96)
     
     field = l96.GinelliForward(dimN,M,tendfunc = L96, jacfunc = L96Jac, jacVfunc = L96JacV,jacfull=L96JacFull, integrator=integrator)
+    field.rtol = 1e-12
+    field.atol = 1e-12
     for i,tn in enumerate(timeintervall):
         print(tn)
         
@@ -124,7 +127,7 @@ for paraL96,h in product(experiments ,hs):
                     stepsize=b
                     #print('g')
                     for counting in np.arange(0,b-a):
-                        field.integrate_back(dtau)
+                        field.integrate_back(dtau,dt =dt)
                         #print('h')
                     nonlinear_prediction = field.x['back'] - trajectory[tn+stepsize,:]
                     firstorder_prediction    = CLV[tn+stepsize,:,clv-1]*np.exp(dtau*np.memmap.sum(lyaploc_clv[tn:tn+stepsize,clv-1]))*epsilon

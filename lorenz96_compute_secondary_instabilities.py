@@ -18,7 +18,7 @@ paraL96_2lay = {'F1' : 10,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_2layer',
-           'time' : np.arange(0,2000,0.1),
+           'time' : np.arange(0,500,0.1),
            'spinup' : 100,
            '2lay' : True
            }
@@ -32,7 +32,7 @@ paraL96_1lay = {'F1' : 10,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_1layer',
-           'time' : np.arange(0,1000,0.1),
+           'time' : np.arange(0,500,0.01),
            'spinup' : 100,
            '2lay' : False
            }
@@ -63,12 +63,7 @@ for paraL96,h in product([paraL96_1lay],hs):
     
     t = paraL96['time']
     CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(t),dimN,M),dtype='float64')
-    #BLV = np.memmap(savename+'/BLV.dat',mode='r',shape=(len(t),dimN,M),dtype='float64')
-    #R = np.memmap(savename+'/R.dat',mode='r',shape=(len(t),dimN,M),dtype='float64')
-    #lyapmean_blv = np.memmap(savename+'/lyapmean_blv.dat',mode='r',shape=(M),dtype='float64')
-    #lyapmean_clv = np.memmap(savename+'/lyapmean_clv.dat',mode='r',shape=(M),dtype='float64')
     lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(t),M),dtype='float64')
-    #lyaploc_blv = np.memmap(savename+'/lyaploc_blv',mode='r',shape=(len(t)-1,M),dtype='float64')
     invCLV = np.memmap(savename+'/invCLV.dat',mode='r',shape=(len(t),dimN,M),dtype='float64')
     
     
@@ -92,10 +87,9 @@ for paraL96,h in product([paraL96_1lay],hs):
         for n_ind, n_step in enumerate(steplengthforsecondorder):
             if n_ind == 0: solution[tn,n_ind,:,:] = 0
             else:
-                tni = tn #np.max((tn,tn+n_step-10))
+                tni = tn 
                 solution[tn,n_ind,:,:] = (solution[tn,n_ind-1,:,:] + 
             dtau * np.multiply(np.exp(-dtau*np.memmap.sum(lyaploc_clv[tni:tn+n_step,:,np.newaxis], axis =0)),np.multiply(contracted_CLVs[tn+n_step,:,:],np.exp(2.0*np.memmap.sum(dtau*lyaploc_clv[tni:tn+n_step,np.newaxis,:], axis =0))))
-            #dtau * contracted_CLVs[tn+n_step,:,:]
             )
         for n_ind, n_step in enumerate(steplengthforsecondorder):
             solution[tn,n_ind,:,:] = np.multiply(solution[tn,n_ind,:,:] ,np.exp(np.sum(dtau*lyaploc_clv[tn:tn+n_step,:,np.newaxis], axis =0)))
@@ -103,7 +97,7 @@ for paraL96,h in product([paraL96_1lay],hs):
             else:
                 full_solution[tn,n_ind,:,:] = np.matmul(CLV[tn+n_step,:,:],solution[tn,n_step,:,:])
                 growth[tn,n_ind,:]=np.log(np.linalg.norm(full_solution[tn,n_ind,:,:],axis=0))/(n_step*dtau)
-                #normalized_solution[tn,n_ind,:,:]=np.divide(solution[tn,n_ind,:,:],np.linalg.norm(solution[tn,n_ind,:,:],axis=0))
+
         if tn % 400 == 0:
             np.memmap.flush(solution)
             np.memmap.flush(contracted_CLVs)

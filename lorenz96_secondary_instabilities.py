@@ -20,7 +20,7 @@ paraL96_2lay = {'F1' : 10,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_2layer',
-           'time' : np.arange(0,1000,0.1),
+           'time' : np.arange(0,500,0.1),
            'spinup' : 100,
            '2lay' : True
            }
@@ -34,7 +34,7 @@ paraL96_1lay = {'F1' : 10,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_1layer',
-           'time' : np.arange(0,1000,0.1),
+           'time' : np.arange(0,500,0.01),
            'spinup' : 100,
            '2lay' : False
            }
@@ -55,7 +55,6 @@ for paraL96,h in product(experiments,hs):
         M = paraL96['dimX'] 
         dimN = paraL96['dimX'] 
         
-    integrator = 'classic'
     t = paraL96['time']
     dt = np.mean(np.diff(t))
     
@@ -87,7 +86,13 @@ for paraL96,h in product(experiments,hs):
     for key in paraL96.keys(): print(key+' : '+str(paraL96[key]))
     if paraL96['2lay']: L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96_2layer(paraL96)
     else: L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96(paraL96)
-    field = l96.GinelliForward(dimN,M,tendfunc = L96, jacfunc = L96Jac, jacVfunc = L96JacV,jacfull=L96JacFull, integrator=integrator)
+    
+    integrator = 'rk4'
+    
+    field = l96.GinelliForward(dimN,M,tendfunc = L96, jacfunc = None, jacVfunc = L96JacV,jacfull=None, integrator=integrator)
+    field.rtol = 1e-12
+    field.atol = 1e-12
+    
     # initialize fields 
     print("\nInitialize ...")
     field.init_back('random',0.1)
@@ -96,7 +101,7 @@ for paraL96,h in product(experiments,hs):
     # spinup
     print("\nSpinup ...")
 
-    field.integrate_back(spinup)    
+    field.integrate_back(spinup,dt=dt)    
     field.step_t = 0.0
 
     BLV[0,:,:]=field.x['lin']
@@ -147,6 +152,12 @@ for paraL96,h in product(experiments,hs):
             np.memmap.flush(tendcorr)
     lyapmean_clv[:]=np.mean(lyaploc_clv[int(tn/2):,:],axis=0)
     
+    
+
+    np.memmap.flush(R)
+    np.memmap.flush(CLV)
+    np.memmap.flush(lyaploc_clv)
+    np.memmap.flush(tendcorr)
     
     
     print("Saveing results in folder "+savename+".")
