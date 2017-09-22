@@ -34,7 +34,7 @@ paraL96_1lay = {'F1' : 10,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_1layer',
-           'time' : np.arange(0,500,0.01),
+           'time' : np.arange(0,500,0.1),
            'spinup' : 100,
            '2lay' : False
            }
@@ -56,7 +56,7 @@ for paraL96,h in product(experiments,hs):
         dimN = paraL96['dimX'] 
         
     t = paraL96['time']
-    dt = np.mean(np.diff(t))
+    dt = 0.01#np.mean(np.diff(t))
     
     savename=paraL96['expname']+"_h_"+str(h)
     spinup = paraL96['spinup']
@@ -66,17 +66,17 @@ for paraL96,h in product(experiments,hs):
     
     
     if not os.path.exists(savename): os.mkdir(savename)
-    CLV = np.memmap(savename+'\CLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64')
-    BLV = np.memmap(savename+'\BLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64')
-    R = np.memmap(savename+'\R.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64')
-    lyapmean_blv = np.memmap(savename+'\lyapmean_blv.dat',mode='w+',shape=(M),dtype='float64')
-    lyapmean_clv = np.memmap(savename+'\lyapmean_clv.dat',mode='w+',shape=(M),dtype='float64')
-    lyaploc_clv = np.memmap(savename+'\lyaploc_clv',mode='w+',shape=(len(t),M),dtype='float64')
-    lyaploc_blv = np.memmap(savename+'\lyaploc_blv',mode='w+',shape=(len(t)-1,M),dtype='float64')
-    np.save(savename+'\t',t)
-    trajectory = np.memmap(savename+'\trajectory.dat',mode='w+',shape=(len(t),dimN),dtype='float64')
-    if testzeroclv: tendency = np.memmap(savename+'\tendency.dat',mode='w+',shape=(len(t),dimN),dtype='float64')
-    if testzeroclv: tendcorr = np.memmap(savename+'\tendcorr.dat',mode='w+',shape=(len(t)),dtype='float64')
+    CLV = np.memmap(savename+'/CLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64', order = 'F')
+    BLV = np.memmap(savename+'/BLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64', order = 'F')
+    R = np.memmap(savename+'/R.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64', order = 'F')
+    lyapmean_blv = np.memmap(savename+'/lyapmean_blv.dat',mode='w+',shape=(M),dtype='float64', order = 'F')
+    lyapmean_clv = np.memmap(savename+'/lyapmean_clv.dat',mode='w+',shape=(M),dtype='float64', order = 'F')
+    lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='w+',shape=(len(t),M),dtype='float64', order = 'F')
+    lyaploc_blv = np.memmap(savename+'/lyaploc_blv',mode='w+',shape=(len(t)-1,M),dtype='float64', order = 'F')
+    np.save(savename+'/t',t)
+    trajectory = np.memmap(savename+'/trajectory.dat',mode='w+',shape=(len(t),dimN),dtype='float64', order = 'F')
+    if testzeroclv: tendency = np.memmap(savename+'/tendency.dat',mode='w+',shape=(len(t),dimN),dtype='float64', order = 'F')
+    if testzeroclv: tendcorr = np.memmap(savename+'/tendcorr.dat',mode='w+',shape=(len(t)),dtype='float64', order = 'F')
     
     
     # Compute the exponents
@@ -164,7 +164,7 @@ for paraL96,h in product(experiments,hs):
     np.save(savename+"/paraL96",paraL96)
     np.save(savename+"/h",h)
     
-    invCLV = np.memmap(savename+'\invCLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64')
+    invCLV = np.memmap(savename+'/invCLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64')
     
     for tn, (ts,te) in enumerate(zip(t[0:-1],t[1:])):
         invCLV[tn,:,:]=np.linalg.inv(CLV[tn,:,:])  

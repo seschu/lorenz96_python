@@ -11,20 +11,20 @@ resultsfolder='secondaryinstabilities'
 
 
 
-CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(t),dimN,M,1),dtype='float64')
-BLV = np.memmap(savename+'/BLV.dat',mode='r',shape=(len(t),dimN,M,1),dtype='float64')
-R = np.memmap(savename+'/R.dat',mode='r',shape=(len(t),dimN,M,1),dtype='float64')
-lyapmean_blv = np.memmap(savename+'/lyapmean_blv.dat',mode='r',shape=(M,1),dtype='float64')
-lyapmean_clv = np.memmap(savename+'/lyapmean_clv.dat',mode='r',shape=(M,1),dtype='float64')
-lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(t),M,1),dtype='float64')
-lyaploc_blv = np.memmap(savename+'/lyaploc_blv',mode='r',shape=(len(t)-1,M,1),dtype='float64')
+CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(t),dimN,M,1),dtype='float64', order = 'F')
+BLV = np.memmap(savename+'/BLV.dat',mode='r',shape=(len(t),dimN,M,1),dtype='float64', order = 'F')
+R = np.memmap(savename+'/R.dat',mode='r',shape=(len(t),dimN,M,1),dtype='float64', order = 'F')
+lyapmean_blv = np.memmap(savename+'/lyapmean_blv.dat',mode='r',shape=(M,1),dtype='float64', order = 'F')
+lyapmean_clv = np.memmap(savename+'/lyapmean_clv.dat',mode='r',shape=(M,1),dtype='float64', order = 'F')
+lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(t),M,1),dtype='float64', order = 'F')
+lyaploc_blv = np.memmap(savename+'/lyaploc_blv',mode='r',shape=(len(t)-1,M,1),dtype='float64', order = 'F')
 
 precision='float32'
-contracted_CLVs = np.memmap(savename+'/contracted_clvs.dat',mode='r',shape=(len(t),dimN,M),dtype=precision) #(final_clv,init_clv)
-solution = np.memmap(savename+'/solution.dat',mode='r',shape=(len(steplengthforsecondorder),len(t),dimN,M),dtype=precision)
-normalized_solution = np.memmap(savename+'/solution.dat',mode='r',shape=(len(steplengthforsecondorder),len(t),dimN,M),dtype=precision)
-growth = np.memmap(savename+'/growth.dat',mode='r',shape=(len(steplengthforsecondorder),len(t),M),dtype=precision)
-invCLV = np.memmap(savename+'/invCLV.dat',mode='r',shape=(len(t),dimN,M,1),dtype='float64')
+contracted_CLVs = np.memmap(savename+'/contracted_clvs.dat',mode='r',shape=(len(t),dimN,M),dtype='float64', order = 'F') #(final_clv,init_clv)
+solution = np.memmap(savename+'/solution.dat',mode='r',shape=(len(steplengthforsecondorder),len(t),dimN,M),dtype='float64', order = 'F')
+normalized_solution = np.memmap(savename+'/solution.dat',mode='r',shape=(len(steplengthforsecondorder),len(t),dimN,M),dtype='float64', order = 'F')
+growth = np.memmap(savename+'/growth.dat',mode='r',shape=(len(steplengthforsecondorder),len(t),M),dtype='float64', order = 'F')
+invCLV = np.memmap(savename+'/invCLV.dat',mode='r',shape=(len(t),dimN,M,1),dtype='float64', order = 'F')
 
 
     

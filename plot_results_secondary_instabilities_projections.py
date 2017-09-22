@@ -31,7 +31,7 @@ paraL96_1lay = {'F1' : 10,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_1layer',
-           'time' : np.arange(0,1000,0.1),
+           'time' : np.arange(0,100,0.1),
            'spinup' : 100,
            '2lay' : False
            }
@@ -52,7 +52,7 @@ hs=[1.0] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
 
 compute = True #compute array projections
 
-averageintervall=np.arange(2000,8000)
+averageintervall=np.arange(1000,4000)
 
 for paraL96,h in product(experiments,hs):
     
@@ -74,8 +74,8 @@ for paraL96,h in product(experiments,hs):
     CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(paraL96['time']),dimN,M),dtype='float64')
     
     if compute: 
-        solution = np.memmap(savename+'/solution.dat',mode='r',shape=(len(paraL96['time']),len(steplengthforsecondorder),dimN,M),dtype=precision)
-        full_solution = np.memmap(savename+'/full_solution.dat',mode='r',shape=(len(paraL96['time']),len(steplengthforsecondorder),dimN,M),dtype=precision)
+        solution = np.memmap(savename+'/solution.dat',mode='r',shape=(len(paraL96['time']),len(steplengthforsecondorder),dimN,M),dtype=precision,order = 'F')
+        full_solution = np.memmap(savename+'/full_solution.dat',mode='r',shape=(len(paraL96['time']),len(steplengthforsecondorder),dimN,M),dtype=precision, order = 'F')
     if compute:  
         projections=np.zeros((len(steplengthforsecondorder),dimN,M))
         correlations=np.zeros((len(steplengthforsecondorder),dimN,M))
@@ -84,10 +84,11 @@ for paraL96,h in product(experiments,hs):
         correlations = np.load(savename+"/correlations.npy")
     if compute:
         dummy = np.zeros((len(steplengthforsecondorder),solution.shape[2],solution.shape[3]))
-        for tn in averageintervall:
-            dummy = dummy + np.abs(solution[tn,:,:,:])
-        dummy = dummy/len(averageintervall)
-        
+#        for tn in averageintervall:
+#            print(tn)
+#            dummy = dummy + np.abs(solution[tn,:,:,:])
+#        dummy = dummy/len(averageintervall)
+        dummy = np.memmap.mean(np.abs(solution[averageintervall,:,:,:]))
         projections[1:,:,:]=np.divide(dummy[1:,:,:], np.linalg.norm(dummy[1:,:,:], axis = 1, keepdims=True))
         
         

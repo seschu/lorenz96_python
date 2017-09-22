@@ -55,19 +55,19 @@ experiments = [paraL96_1lay]#,paraL96_2lay]#,paraL96_1lay]
 integrator = 'rk4'
 
 # first test clv
-epsilons=10.0**np.arange(-8,1.5,0.1,dtype = precision)
-intsteps=np.arange(0,100,1)
+epsilons=10.0**np.arange(-2,1.6,0.1,dtype = precision)
+intsteps=np.arange(0,200,1)
 
 
 CLVs=[1,8,14,30] # ,13, 30]#np.arange(1,2,1)
-timeintervall = range(2000,4000,500)
+timeintervall = range(2000,4000+1,300)
 for paraL96,h in product(experiments ,hs):
     if not paraL96['2lay'] and not h == 1.0: print("1 lay only with h = 1.");break
     savename=paraL96['expname']+"_h_"+str(h)
     spinup = paraL96['spinup']        
     paraL96=np.load(savename+"/paraL96.npy")
     paraL96=paraL96[()]
-    dt = np.mean(np.diff(paraL96['time']))
+    dt = 0.01#np.mean(np.diff(paraL96['time']))
     # M number exponents
     if paraL96['2lay']:
         M = paraL96['dimX'] + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
@@ -123,12 +123,14 @@ for paraL96,h in product(experiments ,hs):
             print(' eps: '+str(epsilon))
             for nc, clv in enumerate(CLVs):
                 field.x['back']=trajectory[tn,:]+epsilon*CLV[tn,:,clv-1]
+                #print(0,np.log10(epsilon),np.log10(np.linalg.norm(epsilon*CLV[tn,:,clv-1])))
+                    
                 for step, (a,b) in enumerate(zip(intsteps[0:-1],intsteps[1:])):
                     stepsize=b
                     #print('g')
                     for counting in np.arange(0,b-a):
                         field.integrate_back(dtau,dt =dt)
-                        #print('h')
+                        #print('counting')
                     nonlinear_prediction = field.x['back'] - trajectory[tn+stepsize,:]
                     firstorder_prediction    = CLV[tn+stepsize,:,clv-1]*np.exp(dtau*np.memmap.sum(lyaploc_clv[tn:tn+stepsize,clv-1]))*epsilon
                     secondorder_prediction    = full_solution[tn,stepsize,:,clv-1]*epsilon**2.0
@@ -141,6 +143,7 @@ for paraL96,h in product(experiments ,hs):
                                                       +CLV[tn+stepsize,:,clv-1]
                                                       *np.exp(dtau*np.memmap.sum(lyaploc_clv[tn:tn+stepsize,clv-1])))
                     
+                    #print(step+1,np.log10(epsilon),np.log10(np.linalg.norm(nonlinear_prediction - firstorder_prediction)),np.log10(np.linalg.norm(nonlinear_prediction - firstandsecondorder_prediction)))
                     
                     correlation[nc][i,en,step] = corr(nonlinear_prediction,firstorder_prediction)
                     
