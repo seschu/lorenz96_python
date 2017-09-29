@@ -30,7 +30,8 @@ paraL96_2lay = {'F1' : 10,
            'expname' : 'secondaryinstabilities_2layer',
            'time' : np.arange(0,500,0.1),
            'spinup' : 100,
-           '2lay' : True
+           '2lay' : True,
+           'integrator': 'classic'
            }
 
 paraL96_1lay = {'F1' : 10,
@@ -42,9 +43,10 @@ paraL96_1lay = {'F1' : 10,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_1layer',
-           'time' : np.arange(0,500,0.1),
+           'time' : np.arange(0,500,0.05),
            'spinup' : 100,
-           '2lay' : False
+           '2lay' : False,
+           'integrator': 'classic'
            }
 
 
@@ -52,22 +54,22 @@ testzeroclv=True
 
 hs=[1.0] #, 0.5] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
 experiments = [paraL96_1lay]#,paraL96_2lay]#,paraL96_1lay]    
-integrator = 'rk4'
+integrator = 'classic'
 
 # first test clv
-epsilons=10.0**np.arange(-2,1.6,0.1,dtype = precision)
-intsteps=np.arange(0,200,1)
+epsilons=10.0**np.arange(0,2.1,0.2,dtype = precision)
+intsteps=np.arange(0,100,1)
 
 
-CLVs=[1,8,14,30] # ,13, 30]#np.arange(1,2,1)
-timeintervall = range(2000,4000+1,300)
+CLVs=[1,2,3,4,5] # ,13, 30]#np.arange(1,2,1)
+timeintervall = range(200,600,100)
 for paraL96,h in product(experiments ,hs):
     if not paraL96['2lay'] and not h == 1.0: print("1 lay only with h = 1.");break
     savename=paraL96['expname']+"_h_"+str(h)
     spinup = paraL96['spinup']        
     paraL96=np.load(savename+"/paraL96.npy")
     paraL96=paraL96[()]
-    dt = 0.01#np.mean(np.diff(paraL96['time']))
+    dt = 0.005#np.mean(np.diff(paraL96['time']))
     # M number exponents
     if paraL96['2lay']:
         M = paraL96['dimX'] + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
@@ -94,28 +96,28 @@ for paraL96,h in product(experiments ,hs):
     normnonlin =[]
     
     for clv in CLVs:
-        correlation.append(np.memmap(savename+'/correlation_only_1_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
-        correlationv2.append(np.memmap(savename+'/correlation_1and2_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
-        correlationv3.append(np.memmap(savename+'/correlation_only_2_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
-        normerror.append(np.memmap(savename+'/normerror_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
-        normerror_1st.append(np.memmap(savename+'/normerror_1st_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
-        normerrorrel_1st.append(np.memmap(savename+'/normerrorrel_1st_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
-        normerrorrel_2nd.append(np.memmap(savename+'/normerrorrel_2nd_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
-        normerrorrel.append(np.memmap(savename+'/normerrorrel_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
-        normnonlin.append(np.memmap(savename+'/normnonlin_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
-        realgrowth.append(np.memmap(savename+'/realgrowth_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'F'))
+        correlation.append(np.memmap(savename+'/correlation_only_1_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'C'))
+        correlationv2.append(np.memmap(savename+'/correlation_1and2_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'C'))
+        correlationv3.append(np.memmap(savename+'/correlation_only_2_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'C'))
+        normerror.append(np.memmap(savename+'/normerror_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'C'))
+        normerror_1st.append(np.memmap(savename+'/normerror_1st_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'C'))
+        normerrorrel_1st.append(np.memmap(savename+'/normerrorrel_1st_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'C'))
+        normerrorrel_2nd.append(np.memmap(savename+'/normerrorrel_2nd_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'C'))
+        normerrorrel.append(np.memmap(savename+'/normerrorrel_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'C'))
+        normnonlin.append(np.memmap(savename+'/normnonlin_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'C'))
+        realgrowth.append(np.memmap(savename+'/realgrowth_clv'+str(clv)+'.dat',mode='w+',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precision,order = 'C'))
  
-    CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(paraL96['time']),dimN,M),dtype='float64')
-    lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(paraL96['time']),M),dtype='float64')
-    trajectory = np.memmap(savename+'/trajectory.dat',mode='r',shape=(len(paraL96['time']),dimN),dtype='float64')
-    full_solution = np.memmap(savename+'/full_solution.dat',mode='r',shape=(len(paraL96['time']),len(steplengthforsecondorder),dimN,M),dtype='float64')
+    CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(paraL96['time']),dimN,M),dtype='float64',order = 'C')
+    lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(paraL96['time']),M),dtype='float64',order = 'C')
+    trajectory = np.memmap(savename+'/trajectory.dat',mode='r',shape=(len(paraL96['time']),dimN),dtype='float64',order = 'C')
+    full_solution = np.memmap(savename+'/full_solution.dat',mode='r',shape=(len(paraL96['time']),len(steplengthforsecondorder),dimN,M),dtype='float64',order = 'C')
     
     if paraL96['2lay']: L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96_2layer(paraL96)
     else: L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96(paraL96)
     
-    field = l96.GinelliForward(dimN,M,tendfunc = L96, jacfunc = L96Jac, jacVfunc = L96JacV,jacfull=L96JacFull, integrator=integrator)
-    field.rtol = 1e-12
-    field.atol = 1e-12
+    field = l96.GinelliForward(dimN,M,tendfunc = L96, jacfunc = L96Jac, jacVfunc = L96JacV,jacfull=L96JacFull, integrator=paraL96['integrator'])
+    field.rtol = 1e-8
+    field.atol = 1e-8
     for i,tn in enumerate(timeintervall):
         print(tn)
         

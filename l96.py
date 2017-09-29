@@ -23,20 +23,29 @@ def setupL96(para):
     Im1=(I-1) % N
     Ip1=(I+1) % N
     #Ip2=(I+2) % N
-    
+    M = N
     L96 = lambda t,x: (x[Ip1]-x[Im2]) * x[Im1]- x[I] + F
-    L96Jac = lambda x,t: np.array(np.stack((-x[Im1],x[Ip1]-x[Im2],-1.0*np.ones(N),x[Im1]),axis = 1))
+    mydiag = lambda a,k: np.roll(np.diag(a),shift=k,axis=1)
+    print("hier")
+    L96Jac = lambda x,t: -np.eye(N) + mydiag(x[Ip1]-x[Im2],-1) + mydiag(x[Im1],1) - mydiag(x[Im1],-2)
     L96JacV = lambda x,v,t : np.multiply(v[Im2,:],-x[Im1,np.newaxis])+np.multiply(v[Im1,:],x[Ip1,np.newaxis]-x[Im2,np.newaxis])-v[I,:]+np.multiply(v[Ip1,:],x[Im1,np.newaxis])
     
     #L96Full = lambda t,x: np.concatenate((L96(x[0:dimN],t), np.reshape(L96JacV(x[0:dimN],np.reshape(x[dimN:],(dimN,dimN)),t),((dimN)**2,1)))
-    
-    #for k in np.arange(0,dimN):
-    #    HessMat[XI[k],XIp1[k],XIm1[k]]=1
-    #    HessMat[XI[k],XIm1[k],XIp1[k]]=1
-    #    HessMat[XI[k],XIm2[k],XIm1[k]]=-1
-    #    HessMat[XI[k],XIm1[k],XIm2[k]]=-1
-    HessMat = None
-    L96JacFull = None
+    HessMat = np.zeros((N,N,N))
+    for k in np.arange(0,dimN):
+        HessMat[I[k],Ip1[k],Im1[k]]=1
+        HessMat[I[k],Im1[k],Ip1[k]]=1
+        HessMat[I[k],Im2[k],Im1[k]]=-1
+        HessMat[I[k],Im1[k],Im2[k]]=-1
+    #HessMat = None
+    def L96JacFull(x,t):
+        res = np.zeros((N+N*M,N+N*M))
+        res[:N,:N] = L96Jac(x[:N],t)
+        for ix in range(0,M):
+            res[N+N*ix:N+N*(ix+1),N+N*ix:N+N*(ix+1)] = L96Jac(x[:N],t)
+            res[N+N*ix:N+N*(ix+1),:N] =  np.sum(np.multiply(HessMat,x[np.newaxis,np.newaxis,N+N*ix:N+N*(ix+1)]),axis=2)
+        return res   
+        
     return L96,L96Jac,L96JacV,L96JacFull,dimN
 
 def contract_hess_l96_1layer(a,b,c):
@@ -433,7 +442,7 @@ class GinelliForward():
             r.integrate(r.t+delta_t)
             return r.y,r.t
         elif integrator == 'classic':
-            intres = odeint(lambda x,t : f(t,x), y0, [self.step_t,self.step_t+delta_t], mxstep=0, Dfun = jac,rtol=self.rtol,atol=self.atol)
+            intres = odeint(lambda x,t : f(t,x), y0, [self.step_t,self.step_t+delta_t],  Dfun = jac,rtol=self.rtol,atol=self.atol)
             return intres[-1,:],self.step_t+delta_t
         elif integrator == 'rk4':
             tend=self.RK4(f)
@@ -447,7 +456,7 @@ class GinelliForward():
     def integrate_back(self,delta_t,integrator=None,dt= None):
         if not integrator: integrator=self.defaultintegrator
         self.xold['back'] = self.x['back']
-        self.x['back'], self.step_t = self.integrate(self.tendency, self.x['back'], delta_t,integrator=integrator,dt= dt)# ,max_step = 1,jac=None)#self.jacobian)
+        self.x['back'], self.step_t = self.integrate(self.tendency, self.x['back'], delta_t,integrator=integrator,dt= dt,jac=self.jacobian)
     
     # integrate background and tangent linear at the same time
     def integrate_all(self, delta_t, normalize = False,integrator=None,dt= None):
@@ -462,3 +471,21 @@ class GinelliForward():
         self.step = self.step + 1
         
         if normalize: self.x['lin'] = self.x['lin']/np.linalg.norm(self.x['lin'],axis=0,keepdims=True)   
+        
+    
+    
+    
+def test_jac(tend,jac,dim,n=100,time=0,epsrange = 10**np.arange(-8,1.1),tendtimeord=0,jactimeord=1):
+    correlation = np.zeros((len(epsrange)))
+    for ieps,eps in enumerate(epsrange):
+        for i in range(0,n):
+            testa = np.random.rand(dim)
+            testb = testa+eps*np.random.rand(dim)
+            if tendtimeord==0:  tenddiff = (tend(time,testb) - tend(time,testa))/eps
+            else:               tenddiff = (tend(testb,time) - tend(testa,time))/eps 
+            if jactimeord==0: jacdiff = np.matmul(jac(time,testa),(testb-testa)/eps)
+            else:             jacdiff = np.matmul(jac(testa,time),(testb-testa)/eps)
+            correlation[ieps] = correlation[ieps] + np.corrcoef(tenddiff,jacdiff)[0,1]/np.float(n)
+    return correlation
+    
+    

@@ -1,4 +1,4 @@
-#!/home/user/anaconda3/bin/python
+    #!/home/user/anaconda3/bin/python
 import numpy as np
 import os
 import l96
@@ -20,7 +20,8 @@ paraL96_2lay = {'F1' : 10,
            'expname' : 'secondaryinstabilities_2layer',
            'time' : np.arange(0,500,0.1),
            'spinup' : 100,
-           '2lay' : True
+           '2lay' : True,
+           'integrator': 'classic'
            }
 
 paraL96_1lay = {'F1' : 10,
@@ -32,14 +33,15 @@ paraL96_1lay = {'F1' : 10,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_1layer',
-           'time' : np.arange(0,500,0.1),
+           'time' : np.arange(0,500,0.05),
            'spinup' : 100,
-           '2lay' : False
+           '2lay' : False,
+           'integrator': 'classic'
            }
 
 
 testzeroclv=True
-steplengthforsecondorder = np.arange(0,200,1)
+steplengthforsecondorder = np.arange(0,400,1)
 hs=[1.0]#, 0.5] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
 precision='float64'    
 for paraL96,h in product([paraL96_1lay],hs):
@@ -62,18 +64,18 @@ for paraL96,h in product([paraL96_1lay],hs):
     
     
     t = paraL96['time']
-    CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(t),dimN,M),dtype='float64', order = 'F')
-    lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(t),M),dtype='float64', order = 'F')
-    invCLV = np.memmap(savename+'/invCLV.dat',mode='r',shape=(len(t),dimN,M),dtype='float64', order = 'F')
+    CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(t),dimN,M),dtype='float64', order = 'C')
+    lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(t),M),dtype='float64', order = 'C')
+    invCLV = np.memmap(savename+'/invCLV.dat',mode='r',shape=(len(t),dimN,M),dtype='float64', order = 'C')
     
     
     
     lensteparray = len(steplengthforsecondorder)
-    contracted_CLVs = np.memmap(savename+'/contracted_clvs.dat',mode='w+',shape=(len(t),dimN,M),dtype=precision, order = 'F') #(final_clv,init_clv)
-    solution = np.memmap(savename+'/solution.dat',mode='w+',shape=(len(t),lensteparray,dimN,M),dtype=precision, order = 'F')
-    full_solution = np.memmap(savename+'/full_solution.dat',mode='w+',shape=(len(t),lensteparray,dimN,M),dtype=precision, order = 'F')
-    #normalized_solution = np.memmap(savename+'/normalized_solution.dat',mode='w+',shape=(len(t),lensteparray,dimN,M),dtype=precision, order = 'F')
-    growth = np.memmap(savename+'/growth.dat',mode='w+',shape=(len(t),lensteparray,M),dtype=precision, order = 'F')
+    contracted_CLVs = np.memmap(savename+'/contracted_clvs.dat',mode='w+',shape=(len(t),dimN,M),dtype=precision, order = 'C') #(final_clv,init_clv)
+    solution = np.memmap(savename+'/solution.dat',mode='w+',shape=(len(t),lensteparray,dimN,M),dtype=precision, order = 'C')
+    full_solution = np.memmap(savename+'/full_solution.dat',mode='w+',shape=(len(t),lensteparray,dimN,M),dtype=precision, order = 'C')
+    #normalized_solution = np.memmap(savename+'/normalized_solution.dat',mode='w+',shape=(len(t),lensteparray,dimN,M),dtype=precision, order = 'C')
+    growth = np.memmap(savename+'/growth.dat',mode='w+',shape=(len(t),lensteparray,M),dtype=precision, order = 'C')
     for tn, (ts,te) in enumerate(zip(t[0:-2],t[1:-1])):
         print(tn)
         contracted_CLVs[tn,:,:]=1/2*contract_func(invCLV[tn,:,:],CLV[tn,:,:])

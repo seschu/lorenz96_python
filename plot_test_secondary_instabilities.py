@@ -25,7 +25,8 @@ paraL96_2lay = {'F1' : 10,
            'expname' : 'secondaryinstabilities_2layer',
            'time' : np.arange(0,500,0.1),
            'spinup' : 100,
-           '2lay' : True
+           '2lay' : True,
+           'integrator': 'classic'
            }
 
 paraL96_1lay = {'F1' : 10,
@@ -39,7 +40,8 @@ paraL96_1lay = {'F1' : 10,
            'expname' : 'secondaryinstabilities_1layer',
            'time' : np.arange(0,500,0.1),
            'spinup' : 100,
-           '2lay' : False
+           '2lay' : False,
+           'integrator': 'classic'
            }
 
 
@@ -52,7 +54,7 @@ experiments = [paraL96_1lay]
 integrator = 'classic'
 
 # first test clv
-min_epsilon=10**-5
+min_epsilon=10**-2
 max_epsilon=101
 
 
@@ -89,21 +91,21 @@ for paraL96,h in product(experiments ,hs):
         
         precisioncorr = 'float64'        
         for clv in CLVs:
-            correlation = np.memmap(savename+'/correlation_only_1_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
-            correlationv2 = np.memmap(savename+'/correlation_1and2_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
-            correlationv3 = np.memmap(savename+'/correlation_only_2_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
-            realgrowth = np.memmap(savename+'/realgrowth_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
-            normerror = np.memmap(savename+'/normerror_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
-            normerror_1st = np.memmap(savename+'/normerror_1st_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
-            normerrorrel = np.memmap(savename+'/normerrorrel_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
-            normerrorrel_1st = np.memmap(savename+'/normerrorrel_1st_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
-            normerrorrel_2nd = np.memmap(savename+'/normerrorrel_2nd_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
+            correlation = np.memmap(savename+'/correlation_only_1_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'C')
+            correlationv2 = np.memmap(savename+'/correlation_1and2_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'C')
+            correlationv3 = np.memmap(savename+'/correlation_only_2_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'C')
+            realgrowth = np.memmap(savename+'/realgrowth_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'C')
+            normerror = np.memmap(savename+'/normerror_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'C')
+            normerror_1st = np.memmap(savename+'/normerror_1st_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'C')
+            normerrorrel = np.memmap(savename+'/normerrorrel_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'C')
+            normerrorrel_1st = np.memmap(savename+'/normerrorrel_1st_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'C')
+            normerrorrel_2nd = np.memmap(savename+'/normerrorrel_2nd_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'C')
             
-            normnonlin = np.memmap(savename+'/normnonlin_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'F')
+            normnonlin = np.memmap(savename+'/normnonlin_clv'+str(clv)+'.dat',mode='r',shape=(len(timeintervall),len(epsilons),len(intsteps)-1),dtype=precisioncorr,order = 'C')
             
-            CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(paraL96['time']),dimN,M),dtype='float64')
-            lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(paraL96['time']),M),dtype='float64')
-            trajectory = np.memmap(savename+'/trajectory.dat',mode='r',shape=(len(paraL96['time']),dimN),dtype='float64')
+            CLV = np.memmap(savename+'/CLV.dat',mode='r',shape=(len(paraL96['time']),dimN,M),dtype='float64',order = 'C')
+            lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='r',shape=(len(paraL96['time']),M),dtype='float64',order = 'C')
+            trajectory = np.memmap(savename+'/trajectory.dat',mode='r',shape=(len(paraL96['time']),dimN),dtype='float64',order = 'C')
         
             
             imin = np.abs(epsilons-min_epsilon).argmin()
@@ -184,26 +186,42 @@ for paraL96,h in product(experiments ,hs):
 #            plt.close(fig)
             
             fig=plt.figure()
-            for ist,istval in enumerate(intsteps[1::20]):
+            for ist,istval in enumerate(intsteps[1::40]):
                 #print(ist,istval)
                 plt.plot(epsilons[imin:imax],np.mean(normerror[:,imin:imax,ist], axis = 0),label=r'$\tau = '+str(istval*dtau)+'$')
             plt.legend(loc = 'upper left',fontsize=6)
             plt.title('scaling of difference between sum of 1st and 2nd order and nonlinear evolution\n for perturbation along CLV '+str(clv),fontsize=8)
             plt.xscale('log')            
             plt.yscale('log')
-            plt.grid(True)
+            plt.grid(False)
+            ax=plt.gca()
+            xlim = ax.get_xlim()
+            ylim = ax.get_ylim()            
+            for i in np.arange(-10,10,0.5):
+                plt.plot(epsilons[imin:imax],10**i*epsilons[imin:imax]**2.0*np.min(np.mean(normerror[:,imin:imax,ist], axis = 0)),label='_nolegend_',color='k',linestyle='-',alpha=0.1)
+                plt.plot(epsilons[imin:imax],10**i*epsilons[imin:imax]**3.0*np.min(np.mean(normerror[:,imin:imax,ist], axis = 0)),label='_nolegend_',color='k',linestyle='-',alpha=0.1)
+            plt.xlim(xlim[0],xlim[1])
+            plt.ylim(ylim[0],ylim[1])
             fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_errorscaling_1stand2nd.pdf")
             fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_errorscaling_1stand2nd.png", dpi =400)
             plt.close(fig)            
        
             fig=plt.figure()
-            for ist,istval in enumerate(intsteps[1::20]):
+            for ist,istval in enumerate(intsteps[1::40]):
                 plt.plot(epsilons[imin:imax],np.mean(normerror_1st[:,imin:imax,ist], axis = 0),label=r'$\tau = '+str(istval*dtau)+'$')
             plt.legend(loc = 'upper left',fontsize=6)
             plt.title('scaling of difference between sum of 1st order and nonlinear evolution\n for perturbation along CLV '+str(clv),fontsize=8)
             plt.xscale('log')            
             plt.yscale('log')
-            plt.grid(True)
+            plt.grid(False)
+            ax=plt.gca()
+            xlim = ax.get_xlim()
+            ylim = ax.get_ylim()            
+            for i in np.arange(-10,10,0.5):
+                plt.plot(epsilons[imin:imax],10**i*epsilons[imin:imax]**2.0*np.min(np.mean(normerror_1st[:,imin:imax,ist], axis = 0)),label='_nolegend_',color='k',linestyle='-',alpha=0.1)
+                plt.plot(epsilons[imin:imax],10**i*epsilons[imin:imax]**3.0*np.min(np.mean(normerror_1st[:,imin:imax,ist], axis = 0)),label='_nolegend_',color='k',linestyle='-',alpha=0.1)
+            plt.xlim(xlim[0],xlim[1])
+            plt.ylim(ylim[0],ylim[1])
             fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_errorscaling_1st.pdf")
             fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_errorscaling_1st.png", dpi =400)
             plt.close(fig)            
@@ -211,27 +229,43 @@ for paraL96,h in product(experiments ,hs):
 
             
             fig=plt.figure()
-            for ist,istval in enumerate(intsteps[1::20]):
+            for ist,istval in enumerate(intsteps[1::40]):
                 #print(ist,istval)
                 plt.plot(epsilons[imin:imax],np.mean(normerrorrel_1st[:,imin:imax,ist], axis = 0),label=r'$\tau = '+str(istval*dtau)+'$')
             plt.legend(loc = 'upper left',fontsize=6)
             plt.title('Relative error scaling with 1st order; CLV '+str(clv),fontsize=8)
             plt.xscale('log')            
             plt.yscale('log')
-            plt.grid(True)
+            plt.grid(False)
+            ax=plt.gca()
+            xlim = ax.get_xlim()
+            ylim = ax.get_ylim()            
+            for i in np.arange(-10,10,0.5):
+                plt.plot(epsilons[imin:imax],10**i*epsilons[imin:imax]**2.0*np.min(np.mean(normerrorrel_1st[:,imin:imax,ist], axis = 0)),label='_nolegend_',color='k',linestyle='-',alpha=0.1)
+                plt.plot(epsilons[imin:imax],10**i*epsilons[imin:imax]**3.0*np.min(np.mean(normerrorrel_1st[:,imin:imax,ist], axis = 0)),label='_nolegend_',color='k',linestyle='-',alpha=0.1)
+            plt.xlim(xlim[0],xlim[1])
+            plt.ylim(ylim[0],ylim[1])
             fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_errorscaling_rel_1st.pdf")
             fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_errorscaling_rel_1st.png", dpi =400)
             plt.close(fig)
             
             fig=plt.figure()
-            for ist,istval in enumerate(intsteps[1::20]):
+            for ist,istval in enumerate(intsteps[1::40]):
                 #print(ist,istval)
                 plt.plot(epsilons[imin:imax],np.mean(normerrorrel[:,imin:imax,ist], axis = 0),label=r'$\tau = '+str(istval*dtau)+'$')
             plt.legend(loc = 'upper left',fontsize=6)
             plt.title('Relative error scaling with 1st and 2nd order; CLV '+str(clv),fontsize=8)
             plt.xscale('log')            
             plt.yscale('log')
-            plt.grid(True)
+            plt.grid(False)
+            ax=plt.gca()
+            xlim = ax.get_xlim()
+            ylim = ax.get_ylim()            
+            for i in np.arange(-10,10,0.5):
+                plt.plot(epsilons[imin:imax],10**i*epsilons[imin:imax]**2.0*np.min(np.mean(normerrorrel[:,imin:imax,ist], axis = 0)),label='_nolegend_',color='k',linestyle='-',alpha=0.1)
+                plt.plot(epsilons[imin:imax],10**i*epsilons[imin:imax]**3.0*np.min(np.mean(normerrorrel[:,imin:imax,ist], axis = 0)),label='_nolegend_',color='k',linestyle='-',alpha=0.1)
+            plt.xlim(xlim[0],xlim[1])
+            plt.ylim(ylim[0],ylim[1])
             fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_errorscaling_rel_1stand2nd.pdf")
             fig.savefig(resultsfolder+"/erroranalysis/CLV_"+str(clv)+"_errorscaling_rel_1stand2nd.png", dpi =400)
             plt.close(fig)

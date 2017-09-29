@@ -22,21 +22,23 @@ paraL96_2lay = {'F1' : 10,
            'expname' : 'secondaryinstabilities_2layer',
            'time' : np.arange(0,500,0.1),
            'spinup' : 100,
-           '2lay' : True
+           '2lay' : True,
+           'integrator': 'classic'
            }
 
-paraL96_1lay = {'F1' : 10,
+paraL96_1lay = {'F1' : 8,
            'F2' : 0,
            'b'  : 10,
            'c'  : 10,
            'h'  : 1,
-           'dimX': 44,
+           'dimX': 5,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_1layer',
-           'time' : np.arange(0,500,0.1),
+           'time' : np.arange(0,100,0.1),
            'spinup' : 100,
-           '2lay' : False
+           '2lay' : False,
+           'integrator': 'classic'
            }
 
 
@@ -66,17 +68,17 @@ for paraL96,h in product(experiments,hs):
     
     
     if not os.path.exists(savename): os.mkdir(savename)
-    CLV = np.memmap(savename+'/CLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64', order = 'F')
-    BLV = np.memmap(savename+'/BLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64', order = 'F')
-    R = np.memmap(savename+'/R.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64', order = 'F')
-    lyapmean_blv = np.memmap(savename+'/lyapmean_blv.dat',mode='w+',shape=(M),dtype='float64', order = 'F')
-    lyapmean_clv = np.memmap(savename+'/lyapmean_clv.dat',mode='w+',shape=(M),dtype='float64', order = 'F')
-    lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='w+',shape=(len(t),M),dtype='float64', order = 'F')
-    lyaploc_blv = np.memmap(savename+'/lyaploc_blv',mode='w+',shape=(len(t)-1,M),dtype='float64', order = 'F')
+    CLV = np.memmap(savename+'/CLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64', order = 'C')
+    BLV = np.memmap(savename+'/BLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64', order = 'C')
+    R = np.memmap(savename+'/R.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64', order = 'C')
+    lyapmean_blv = np.memmap(savename+'/lyapmean_blv.dat',mode='w+',shape=(M),dtype='float64', order = 'C')
+    lyapmean_clv = np.memmap(savename+'/lyapmean_clv.dat',mode='w+',shape=(M),dtype='float64', order = 'C')
+    lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='w+',shape=(len(t),M),dtype='float64', order = 'C')
+    lyaploc_blv = np.memmap(savename+'/lyaploc_blv',mode='w+',shape=(len(t)-1,M),dtype='float64', order = 'C')
     np.save(savename+'/t',t)
-    trajectory = np.memmap(savename+'/trajectory.dat',mode='w+',shape=(len(t),dimN),dtype='float64', order = 'F')
-    if testzeroclv: tendency = np.memmap(savename+'/tendency.dat',mode='w+',shape=(len(t),dimN),dtype='float64', order = 'F')
-    if testzeroclv: tendcorr = np.memmap(savename+'/tendcorr.dat',mode='w+',shape=(len(t)),dtype='float64', order = 'F')
+    trajectory = np.memmap(savename+'/trajectory.dat',mode='w+',shape=(len(t),dimN),dtype='float64', order = 'C')
+    if testzeroclv: tendency = np.memmap(savename+'/tendency.dat',mode='w+',shape=(len(t),dimN),dtype='float64', order = 'C')
+    if testzeroclv: tendcorr = np.memmap(savename+'/tendcorr.dat',mode='w+',shape=(len(t)),dtype='float64', order = 'C')
     
     
     # Compute the exponents
@@ -87,11 +89,10 @@ for paraL96,h in product(experiments,hs):
     if paraL96['2lay']: L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96_2layer(paraL96)
     else: L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96(paraL96)
     
-    integrator = 'rk4'
     
-    field = l96.GinelliForward(dimN,M,tendfunc = L96, jacfunc = None, jacVfunc = L96JacV,jacfull=None, integrator=integrator)
-    field.rtol = 1e-12
-    field.atol = 1e-12
+    field = l96.GinelliForward(dimN,M,tendfunc = L96, jacfunc = L96Jac, jacVfunc = L96JacV,jacfull=L96JacFull, integrator=paraL96['integrator'])
+    field.rtol = 1e-8
+    field.atol = 1e-8
     
     # initialize fields 
     print("\nInitialize ...")
@@ -101,7 +102,10 @@ for paraL96,h in product(experiments,hs):
     # spinup
     print("\nSpinup ...")
 
-    field.integrate_back(spinup,dt=dt)    
+    for i in range(0,spinup):
+        field.integrate_back(1,dt=dt)    
+    field.integrate_back(spinup % 1,dt=dt)    
+    
     field.step_t = 0.0
 
     BLV[0,:,:]=field.x['lin']
