@@ -1,7 +1,8 @@
 #!/home/user/anaconda3/bin/python
 import numpy as np
 from l96 import *
-
+from numpy import linalg
+import os
 # these are our constants
 paraL96 = {'F1' : 64,
            'F2' : 0,
@@ -17,10 +18,11 @@ paraL96 = {'F1' : 64,
 M = paraL96['dimX'] + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
 dimN = paraL96['dimX'] + paraL96['dimX']*paraL96['dimY'] # -1 full spectrum
 integrator = 'classic'
-t = np.arange(0,200,0.01)
+t = np.arange(0,50,0.01)
 spinup = 100;
 #setup L96
-hs=[ 0.    ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
+#hs=[ 0.    ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
+hs=[ 0.    ,  0.0625,  0.25  ,  1.    ]
 CLV = np.zeros((len(t),dimN,M,len(hs)))
 BLV = np.zeros((len(t),dimN,M,len(hs)))
 R = np.zeros((len(t),dimN,M,len(hs)))
@@ -67,7 +69,7 @@ for count,h in enumerate(hs):
 
     print("\nBackwards Steps ...")
     imax = tn
-    res=triu(np.random.rand(M,M))
+    res=np.triu(np.random.rand(M,M))
     CLV[imax,:,:,count]=np.matmul(BLV[imax,:,:,count],res)
     res=res/np.linalg.norm(res,axis=0,keepdims=True)
     lyaploc_clv[imax,:,count]=np.log(1/np.abs(np.linalg.norm(CLV[imax,:,:,count],axis=0)))/np.abs(te-ts)

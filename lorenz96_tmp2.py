@@ -5,28 +5,25 @@ import l96
 from scipy import triu
 import scipy.linalg as linalg
 from itertools import product 
-import warnings
 import matplotlib.pyplot as plt
-#warnings.simplefilter("error")
-#warnings.simplefilter("ignore", DeprecationWarning)
+
 
 # these are our constants
-paraL96_2lay = {'F1' : 64,
+paraL96_2lay = {'F1' : 10,
            'F2' : 0,
            'b'  : 10,
            'c'  : 10,
            'h'  : 1,
-           'dimX': 20,
+           'dimX': 36,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_2layer',
-           'time' : np.arange(0,50,0.01),
+           'time' : np.arange(0,2000,0.1),
            'spinup' : 100,
-           '2lay' : True,
-           'integrator': 'classic'
+           '2lay' : True
            }
 
-paraL96_1lay = {'F1' : 8,
+paraL96_1lay = {'F1' : 10,
            'F2' : 0,
            'b'  : 10,
            'c'  : 10,
@@ -35,17 +32,16 @@ paraL96_1lay = {'F1' : 8,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_1layer',
-           'time' : np.arange(0,200,0.1),
+           'time' : np.arange(0,1000,0.1),
            'spinup' : 100,
-           '2lay' : False,
-           'integrator': 'classic'
+           '2lay' : False
            }
 
 
 testzeroclv=True
 
-hs=[ 0.0 ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1. ]
-experiments = [paraL96_2lay,paraL96_1lay]
+hs=[ 1. ] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
+experiments = [paraL96_1lay]
 
 for paraL96,h in product(experiments,hs):
     if not paraL96['2lay'] and not h == 1.0: print("1 lay only with h = 1.");break
@@ -57,8 +53,9 @@ for paraL96,h in product(experiments,hs):
         M = paraL96['dimX'] 
         dimN = paraL96['dimX'] 
         
+    integrator = 'classic'
     t = paraL96['time']
-    dt = 0.01#np.mean(np.diff(t))
+    dt = np.mean(np.diff(t))
     
     savename=paraL96['expname']+"_h_"+str(h)
     spinup = paraL96['spinup']
@@ -68,17 +65,17 @@ for paraL96,h in product(experiments,hs):
     
     
     if not os.path.exists(savename): os.mkdir(savename)
-    CLV = np.memmap(savename+'/CLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64', order = 'C')
-    BLV = np.memmap(savename+'/BLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64', order = 'C')
-    R = np.memmap(savename+'/R.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64', order = 'C')
-    lyapmean_blv = np.memmap(savename+'/lyapmean_blv.dat',mode='w+',shape=(M),dtype='float64', order = 'C')
-    lyapmean_clv = np.memmap(savename+'/lyapmean_clv.dat',mode='w+',shape=(M),dtype='float64', order = 'C')
-    lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='w+',shape=(len(t),M),dtype='float64', order = 'C')
-    lyaploc_blv = np.memmap(savename+'/lyaploc_blv',mode='w+',shape=(len(t)-1,M),dtype='float64', order = 'C')
+    CLV = np.memmap(savename+'/CLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64')
+    BLV = np.memmap(savename+'/BLV.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64')
+    R = np.memmap(savename+'/R.dat',mode='w+',shape=(len(t),dimN,M),dtype='float64')
+    lyapmean_blv = np.memmap(savename+'/lyapmean_blv.dat',mode='w+',shape=(M),dtype='float64')
+    lyapmean_clv = np.memmap(savename+'/lyapmean_clv.dat',mode='w+',shape=(M),dtype='float64')
+    lyaploc_clv = np.memmap(savename+'/lyaploc_clv',mode='w+',shape=(len(t),M),dtype='float64')
+    lyaploc_blv = np.memmap(savename+'/lyaploc_blv',mode='w+',shape=(len(t)-1,M),dtype='float64')
     np.save(savename+'/t',t)
-    trajectory = np.memmap(savename+'/trajectory.dat',mode='w+',shape=(len(t),dimN),dtype='float64', order = 'C')
-    if testzeroclv: tendency = np.memmap(savename+'/tendency.dat',mode='w+',shape=(len(t),dimN),dtype='float64', order = 'C')
-    if testzeroclv: tendcorr = np.memmap(savename+'/tendcorr.dat',mode='w+',shape=(len(t)),dtype='float64', order = 'C')
+    trajectory = np.memmap(savename+'/trajectory.dat',mode='w+',shape=(len(t),dimN),dtype='float64')
+    if testzeroclv: tendency = np.memmap(savename+'/tendency.dat',mode='w+',shape=(len(t),dimN),dtype='float64')
+    if testzeroclv: tendcorr = np.memmap(savename+'/tendcorr.dat',mode='w+',shape=(len(t)),dtype='float64')
     
     
     # Compute the exponents
@@ -87,13 +84,8 @@ for paraL96,h in product(experiments,hs):
     print("\nExperiment is the following:")
     for key in paraL96.keys(): print(key+' : '+str(paraL96[key]))
     if paraL96['2lay']: L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96_2layer(paraL96)
-    else: L96,L96Jac,L96JacV,L96JacFull,dimN,_ = l96.setupL96(paraL96)
-    
-    
-    field = l96.GinelliForward(dimN,M,tendfunc = L96, jacfunc = L96Jac, jacVfunc = L96JacV,jacfull=L96JacFull, integrator=paraL96['integrator'])
-    field.rtol = None
-    field.atol = None
-    
+    else: L96,L96Jac,L96JacV,L96JacFull,dimN = l96.setupL96(paraL96)
+    field = l96.GinelliForward(dimN,M,tendfunc = L96, jacfunc = None, jacVfunc = L96JacV,jacfull=L96JacFull, integrator=integrator)
     # initialize fields 
     print("\nInitialize ...")
     field.init_back('random',0.1)
@@ -102,10 +94,7 @@ for paraL96,h in product(experiments,hs):
     # spinup
     print("\nSpinup ...")
 
-    for i in range(0,spinup):
-        field.integrate_back(1,dt=dt)    
-    field.integrate_back(spinup % 1,dt=dt)    
-    
+    field.integrate_back(spinup)    
     field.step_t = 0.0
 
     BLV[0,:,:]=field.x['lin']
@@ -119,7 +108,7 @@ for paraL96,h in product(experiments,hs):
         BLV[tn+1,:,:]=field.x['lin']
         print(te)
         lyaploc_blv[tn,:]=field.lyap
-        if tn % 100 == 0:
+        if tn % 1 == 0:
             np.memmap.flush(BLV)
             np.memmap.flush(R)
             np.memmap.flush(lyaploc_blv)
@@ -157,12 +146,6 @@ for paraL96,h in product(experiments,hs):
     lyapmean_clv[:]=np.mean(lyaploc_clv[int(tn/2):,:],axis=0)
     
     
-
-    np.memmap.flush(R)
-    np.memmap.flush(CLV)
-    np.memmap.flush(lyaploc_clv)
-    np.memmap.flush(tendcorr)
-    
     
     print("Saveing results in folder "+savename+".")
     np.save(savename+"/paraL96",paraL96)
@@ -178,9 +161,9 @@ for paraL96,h in product(experiments,hs):
     length=np.zeros((corrs.shape[0],M))
     for n,c in enumerate(corrs):
         d = (np.logical_and(np.abs(tendcorr[:])>c,np.abs(tendcorr[:])<c+0.1))
-        if len(np.where(d==True)) > 1: 
+        if d.any(): 
             length[n,:] = np.sum(d) 
-            lowest[n,:] = np.average(lyaploc_clv,weights = d, axis = 0)
+            lowest[n,:] = np.average(lyaploc_clv[:,:],weights = d, axis = 0)
         else:
             lowest[n,:] = 0
     maskcorr = (np.logical_and(np.abs(tendcorr[:])>0.95,np.abs(tendcorr[:])<1.01))

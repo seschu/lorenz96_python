@@ -1,4 +1,4 @@
-#!/home/user/anaconda3/bin/python
+    #!/home/user/anaconda3/bin/python
 import numpy as np
 import os
 import l96
@@ -7,22 +7,24 @@ import scipy.linalg as linalg
 from itertools import product
 
 
-paraL96_2lay = {'F1' : 64,
+
+# these are our constants
+paraL96_2lay = {'F1' : 10,
            'F2' : 0,
            'b'  : 10,
            'c'  : 10,
            'h'  : 1,
-           'dimX': 20,
+           'dimX': 36,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_2layer',
-           'time' : np.arange(0,50,0.01),
+           'time' : np.arange(0,500,0.1),
            'spinup' : 100,
            '2lay' : True,
            'integrator': 'classic'
            }
 
-paraL96_1lay = {'F1' : 8,
+paraL96_1lay = {'F1' : 10,
            'F2' : 0,
            'b'  : 10,
            'c'  : 10,
@@ -31,7 +33,7 @@ paraL96_1lay = {'F1' : 8,
            'dimY' : 10,
            'RescaledY' : False,
            'expname' : 'secondaryinstabilities_1layer',
-           'time' : np.arange(0,200,0.1),
+           'time' : np.arange(0,500,0.05),
            'spinup' : 100,
            '2lay' : False,
            'integrator': 'classic'
@@ -39,13 +41,10 @@ paraL96_1lay = {'F1' : 8,
 
 
 testzeroclv=True
-
-hs=[ 0.0 ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1. ]
-experiments = [paraL96_2lay,paraL96_1lay]
-
 steplengthforsecondorder = np.arange(0,100,1)
+hs=[1.0]#, 0.5] #   ,  0.0625,  0.125 ,  0.25  ,  0.5   ,  1.    ]
 precision='float64'    
-for paraL96,h in product(experiments ,hs):
+for paraL96,h in product([paraL96_1lay],hs):
     if not paraL96['2lay'] and not h == 1.0: print("1 lay only with h = 1.");break
     savename=paraL96['expname']+"_h_"+str(h)
     spinup = paraL96['spinup']        
@@ -76,43 +75,38 @@ for paraL96,h in product(experiments ,hs):
     solution = np.memmap(savename+'/solution.dat',mode='w+',shape=(len(t),lensteparray,dimN,M),dtype=precision, order = 'C')
     full_solution = np.memmap(savename+'/full_solution.dat',mode='w+',shape=(len(t),lensteparray,dimN,M),dtype=precision, order = 'C')
     #normalized_solution = np.memmap(savename+'/normalized_solution.dat',mode='w+',shape=(len(t),lensteparray,dimN,M),dtype=precision, order = 'C')
-    growth = np.memmap(savename+'/growth.dat',mode='w+',shape=(len(t),lensteparray,M),dtype=precision, order = 'C')
+    #growth = np.memmap(savename+'/growth.dat',mode='w+',shape=(len(t),lensteparray,M),dtype=precision, order = 'C')
     for tn, (ts,te) in enumerate(zip(t[0:-2],t[1:-1])):
         print(tn)
         contracted_CLVs[tn,:,:]=1/2*contract_func(invCLV[tn,:,:],CLV[tn,:,:])
-        if tn % 1000: np.memmap.flush(contracted_CLVs)
     
     np.memmap.flush(contracted_CLVs)
 
     
     for tn, (ts,te) in enumerate(zip(t[0:-steplengthforsecondorder.max()-1],t[1:-steplengthforsecondorder.max()])):
         dtau=te -ts
-        print(tn,paraL96['h'],paraL96['2lay'])
+        print(tn)
         for n_ind, n_step in enumerate(steplengthforsecondorder):
+            dummy = np.exp(dtau*np.sum(lyaploc_clv[tn:tn+n_step,:], axis = 0))
             if n_ind == 0: solution[tn,n_ind,:,:] = 0
             else:
-                tni = tn 
                 solution[tn,n_ind,:,:] = (solution[tn,n_ind-1,:,:] + 
-            dtau * np.multiply(np.exp(-dtau*np.memmap.sum(lyaploc_clv[tni:tn+n_step,:,np.newaxis], axis =0)),np.multiply(contracted_CLVs[tn+n_step,:,:],np.exp(2.0*np.memmap.sum(dtau*lyaploc_clv[tni:tn+n_step,np.newaxis,:], axis =0))))
-            )
+            dtau * np.einsum('i,ij,j->ij',np.reciprocal(dummy),contracted_CLVs[tn+n_step,:,:],
+                                                                 dummy**2.0,order='C'))
         for n_ind, n_step in enumerate(steplengthforsecondorder):
-            solution[tn,n_ind,:,:] = np.multiply(solution[tn,n_ind,:,:] ,np.exp(np.sum(dtau*lyaploc_clv[tn:tn+n_step,:,np.newaxis], axis = 0)))
             if n_ind == 0: continue
             else:
-                full_solution[tn,n_ind,:,:] = np.matmul(CLV[tn+n_step,:,:],solution[tn,n_step,:,:])
-                growth[tn,n_ind,:]=np.log(np.linalg.norm(full_solution[tn,n_ind,:,:],axis=0))/(n_step*dtau)
+                full_solution[tn,n_ind,:,:] = np.einsum('ki,ij,i->kj',CLV[tn+n_step,:,:],solution[tn,n_ind,:,:],np.exp(dtau*np.sum(lyaploc_clv[tn:tn+n_step,:], axis = 0)),order='C')
+                solution[tn,n_ind,:,:] = np.einsum('ij,i->ij',solution[tn,n_ind,:,:],np.exp(dtau*np.sum(lyaploc_clv[tn:tn+n_step,:], axis = 0)),order='C')
+            #np.multiply(solution[tn,n_ind,:,:] ,np.exp(np.sum(dtau*lyaploc_clv[tn:tn+n_step,:,np.newaxis], axis = 0)))
+                #full_solution[tn,n_ind,:,:] = np.matmul(CLV[tn+n_step,:,:],solution[tn,n_step,:,:])
+                #growth[tn,n_ind,:]=np.log(np.linalg.norm(full_solution[tn,n_ind,:,:],axis=0))/(n_step*dtau)
 
         if tn % 1 == 0:
             np.memmap.flush(solution)
             np.memmap.flush(contracted_CLVs)
             #np.memmap.flush(normalized_solution)
             np.memmap.flush(full_solution)
-            np.memmap.flush(growth)   
+            #np.memmap.flush(growth)   
     print("Saveing results in folder "+savename+".")
-    del contracted_CLVs
-    del solution
-    del full_solution
-    del growth
-    del CLV
-    del lyaploc_clv
-    del invCLV
+
